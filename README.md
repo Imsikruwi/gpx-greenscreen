@@ -95,7 +95,12 @@ Bug reports, feature requests, and general feedback are welcome via Ko-fi messag
 
 ## 📄 License
 
-MIT License — Free to use, modify, and distribute.  
-Attribution required: please keep the original credit intact.
+**Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0)**
+
+- ✅ Free to use and modify for personal/educational purposes
+- ✅ Attribution required — keep the original credit
+- ❌ Commercial use prohibited without explicit permission
+
+[View full license →](https://creativecommons.org/licenses/by-nc/4.0/)
 
 **Created by Masagus Zulham (Imsikruwi) © 2026**

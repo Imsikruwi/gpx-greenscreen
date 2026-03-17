@@ -417,6 +417,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
       <div class="sc"><div class="v" id="st-spd">—</div><div class="l">Max Speed</div></div>
       <div class="sc"><div class="v" id="st-ele">—</div><div class="l">Max Elev.</div></div>
       <div class="sc" style="grid-column:span 2"><div class="v" id="st-pts">—</div><div class="l">Total Points</div></div>
+      <!-- Sensor stats (hidden by default, shown if GPX has data) -->
+      <div class="sc" id="sc-hr" style="display:none"><div class="v" id="st-hr-avg" style="color:#ff6b6b">—</div><div class="l">Avg HR (bpm)</div></div>
+      <div class="sc" id="sc-hr-max" style="display:none"><div class="v" id="st-hr-max" style="color:#ff6b6b">—</div><div class="l">Max HR (bpm)</div></div>
+      <div class="sc" id="sc-cad" style="display:none"><div class="v" id="st-cad-avg" style="color:#4a9ef0">—</div><div class="l">Avg Cadence</div></div>
+      <div class="sc" id="sc-pow" style="display:none"><div class="v" id="st-pow-avg" style="color:#f0a04a">—</div><div class="l">Avg Power (W)</div></div>
+      <div class="sc" id="sc-pow-max" style="display:none"><div class="v" id="st-pow-max" style="color:#f0a04a">—</div><div class="l">Max Power (W)</div></div>
       <div class="sc" style="grid-column:span 2"><div class="v st-small" id="st-gps-start">—</div><div class="l">GPS Start</div></div>
       <div class="sc" style="grid-column:span 2"><div class="v st-small" id="st-gps-end">—</div><div class="l">GPS End</div></div>
     </div>
@@ -1016,6 +1022,76 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
       </div>
     </div>
 
+
+    <!-- HEART RATE -->
+    <div class="oc off" id="oc-heartrate">
+      <div class="och">
+        <div class="tr" onclick="toggleOpt('heartrate',this)" style="flex:1;border:none;padding:0;background:none">
+          <span class="tl" style="font-size:12px;font-weight:700;color:var(--text)">🫀 Heart Rate</span>
+          <span class="oc-arrow">▾</span>
+          <div class="tt" id="tog-heartrate" style="margin-left:6px"><div class="th"></div></div>
+        </div>
+      </div>
+      <div class="oc-body">
+        <div class="ocp3" style="display:none" id="pos-heartrate">
+          <div class="chip" onclick="setPos('heartrate','tl',this)">↖</div><div class="chip" onclick="setPos('heartrate','tc',this)">↑</div><div class="chip" onclick="setPos('heartrate','tr',this)">↗</div>
+          <div class="chip" onclick="setPos('heartrate','ml',this)">←</div><div class="chip" onclick="setPos('heartrate','mc',this)">·</div><div class="chip" onclick="setPos('heartrate','mr',this)">→</div>
+          <div class="chip on" onclick="setPos('heartrate','bl',this)">↙</div><div class="chip" onclick="setPos('heartrate','bc',this)">↓</div><div class="chip" onclick="setPos('heartrate','br',this)">↘</div>
+        </div>
+        <div class="sub-lbl" style="margin-top:4px">HR Zones (bpm)</div>
+        <div class="sr">
+          <div class="sm"><span class="sl">Max HR</span><span class="sv" id="hrMaxVal">190</span></div>
+          <input type="range" id="hr-max-slider" min="150" max="220" value="190" step="1"
+                 oninput="setHRMax(this.value)" style="width:100%;margin-top:2px">
+        </div>
+        <div style="font-size:9px;color:var(--text3);font-family:var(--fm);margin-top:4px;line-height:1.6">
+          Zone 1 &lt;60% · Zone 2 60-70% · Zone 3 70-80%<br>Zone 4 80-90% · Zone 5 &gt;90%
+        </div>
+      </div>
+    </div>
+
+    <!-- CADENCE -->
+    <div class="oc off" id="oc-cadence">
+      <div class="och">
+        <div class="tr" onclick="toggleOpt('cadence',this)" style="flex:1;border:none;padding:0;background:none">
+          <span class="tl" style="font-size:12px;font-weight:700;color:var(--text)">🔄 Cadence</span>
+          <span class="oc-arrow">▾</span>
+          <div class="tt" id="tog-cadence" style="margin-left:6px"><div class="th"></div></div>
+        </div>
+      </div>
+      <div class="oc-body">
+        <div class="ocp3" style="display:none" id="pos-cadence">
+          <div class="chip" onclick="setPos('cadence','tl',this)">↖</div><div class="chip" onclick="setPos('cadence','tc',this)">↑</div><div class="chip" onclick="setPos('cadence','tr',this)">↗</div>
+          <div class="chip" onclick="setPos('cadence','ml',this)">←</div><div class="chip" onclick="setPos('cadence','mc',this)">·</div><div class="chip" onclick="setPos('cadence','mr',this)">→</div>
+          <div class="chip" onclick="setPos('cadence','bl',this)">↙</div><div class="chip on" onclick="setPos('cadence','bc',this)">↓</div><div class="chip" onclick="setPos('cadence','br',this)">↘</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POWER -->
+    <div class="oc off" id="oc-power">
+      <div class="och">
+        <div class="tr" onclick="toggleOpt('power',this)" style="flex:1;border:none;padding:0;background:none">
+          <span class="tl" style="font-size:12px;font-weight:700;color:var(--text)">⚡ Power</span>
+          <span class="oc-arrow">▾</span>
+          <div class="tt" id="tog-power" style="margin-left:6px"><div class="th"></div></div>
+        </div>
+      </div>
+      <div class="oc-body">
+        <div class="ocp3" style="display:none" id="pos-power">
+          <div class="chip" onclick="setPos('power','tl',this)">↖</div><div class="chip" onclick="setPos('power','tc',this)">↑</div><div class="chip" onclick="setPos('power','tr',this)">↗</div>
+          <div class="chip" onclick="setPos('power','ml',this)">←</div><div class="chip" onclick="setPos('power','mc',this)">·</div><div class="chip" onclick="setPos('power','mr',this)">→</div>
+          <div class="chip" onclick="setPos('power','bl',this)">↙</div><div class="chip" onclick="setPos('power','bc',this)">↓</div><div class="chip on" onclick="setPos('power','br',this)">↘</div>
+        </div>
+        <div class="sub-lbl" style="margin-top:4px">FTP (Watts)</div>
+        <div class="sr">
+          <div class="sm"><span class="sl">FTP</span><span class="sv" id="ftpVal">200 W</span></div>
+          <input type="range" id="ftp-slider" min="50" max="500" value="200" step="5"
+                 oninput="setFTP(this.value)" style="width:100%;margin-top:2px">
+        </div>
+      </div>
+    </div>
+
   </div><!-- end cg -->
 
 
@@ -1066,8 +1142,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 // STATE
 // ═══════════════════════════════════════════════════════════
 let gpxData=null, tfS0=0, tfE0=0;
-let opts={speed:true,map:true,info:false,arc:false,prog:false,elev:false,gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,roadname:false,odometer:true};
-let oPos={speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc',gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',roadname:'bc',odometer:'bc'};
+let opts={speed:true,map:true,info:false,arc:false,prog:false,elev:false,gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,roadname:false,odometer:true,heartrate:false,cadence:false,power:false};
+let oPos={speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc',gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',roadname:'bc',odometer:'bc',heartrate:'tc',cadence:'tc',power:'tc'};
 let textColor='#ffffff', bgColor='#00b140', speedUnit='kmh';
 let fontScale=2.2, panelOp=0.6;
 let curFrame=0, playing=false, rafId=null, lastPlayT=0;
@@ -1076,6 +1152,30 @@ let gpsFmt='hms', gpsShowDate=false;
 let distDecimals=1, distShowElev=false, distOdoMode=false, odoScale=1.0;
 window._spdDistGap=4;  // gap in fs units between speedometer and distance panel
 // OSM map state
+let hrMaxBpm=190, ftpWatts=200;
+
+function setHRMax(v){
+  hrMaxBpm=parseInt(v);
+  document.getElementById('hrMaxVal').textContent=v;
+  drawFrame(curFrame);
+}
+function setFTP(v){
+  ftpWatts=parseInt(v);
+  document.getElementById('ftpVal').textContent=v+' W';
+  drawFrame(curFrame);
+}
+
+// HR zone color by % of maxHR
+function hrZoneColor(hr){
+  if(!hr||!hrMaxBpm) return '#ffffff';
+  const pct=hr/hrMaxBpm;
+  if(pct<0.60) return '#4a9ef0';   // Z1 blue
+  if(pct<0.70) return '#4af0a0';   // Z2 green
+  if(pct<0.80) return '#f0d04a';   // Z3 yellow
+  if(pct<0.90) return '#f0a04a';   // Z4 orange
+  return '#ff4444';                 // Z5 red
+}
+
 let osmZoom=15, osmMapShape='none', osmMapSize='md', osmShowRoute=true, osmShowHeading=false, osmUseOSM=false;
 let mapBgStyle='trans', mapRouteColor='#ffffff', mapDotColor='#ff3333', mapGhostColor='rgba(255,255,255,0.18)', mapShowNorth=false;
 let osmStyle='standard', osmTint='none', osmBrightness=100, osmContrast=100;
@@ -1113,11 +1213,32 @@ function parseGPX(xml,fname){
   if(!pts.length)throw new Error('No track points');
   const points=[];
   pts.forEach(p=>{
-    points.push({
-      lat:parseFloat(p.getAttribute('lat')),lon:parseFloat(p.getAttribute('lon')),
+    // Standard GPX fields
+    const obj={
+      lat:parseFloat(p.getAttribute('lat')),
+      lon:parseFloat(p.getAttribute('lon')),
       ele:parseFloat(p.querySelector('ele')?.textContent||0),
-      time:p.querySelector('time')?new Date(p.querySelector('time').textContent):null
-    });
+      time:p.querySelector('time')?new Date(p.querySelector('time').textContent):null,
+      hr:null, cad:null, power:null
+    };
+    // Garmin/Strava extensions: <gpxtpx:hr>, <ns3:hr>, <hr>
+    // Try multiple selector strategies for Garmin/Strava/Wahoo extensions
+    const getExt=(el,...tags)=>{
+      // Use only getElementsByTagName wildcard to avoid querySelector namespace errors
+      const all=[...el.getElementsByTagName('*')];
+      for(const tag of tags){
+        const found=all.find(n=>n.localName===tag||n.tagName===tag||n.tagName===tag.replace(':','-'));
+        if(found) return found;
+      }
+      return null;
+    };
+    const hrEl =getExt(p,'hr','heartrate','gpxtpx:hr','ns3:hr');
+    if(hrEl)  obj.hr   =parseFloat(hrEl.textContent);
+    const cadEl=getExt(p,'cad','cadence','gpxtpx:cad','ns3:cad');
+    if(cadEl) obj.cad  =parseFloat(cadEl.textContent);
+    const powEl=getExt(p,'power','watts','gpxtpx:PowerInWatts','ns3:power');
+    if(powEl) obj.power=parseFloat(powEl.textContent);
+    points.push(obj);
   });
   // Compute cumDist + speed_ms
   let cd=0;
@@ -1177,7 +1298,21 @@ function parseGPX(xml,fname){
   // Pre-compute lat/lon bounds for minimap (already done above)
   // Mark that simple map cache needs refresh
   window._simpleMapKey='';
-  gpxData={points,totalDist,maxSpeedMs,minLat,maxLat,minLon,maxLon,minEle,maxEle,totalSecs,fname};
+  // Sensor data stats
+  const hrVals   = points.map(p=>p.hr).filter(v=>v!=null&&!isNaN(v));
+  const cadVals  = points.map(p=>p.cad).filter(v=>v!=null&&!isNaN(v));
+  const powVals  = points.map(p=>p.power).filter(v=>v!=null&&!isNaN(v));
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+  const max = arr => arr.length ? Math.round(Math.max(...arr)) : null;
+  const sensorStats = {
+    hasHR:    hrVals.length>0,
+    maxHR:    max(hrVals),  avgHR:  avg(hrVals),
+    hasCad:   cadVals.length>0,
+    maxCad:   max(cadVals), avgCad: avg(cadVals),
+    hasPower: powVals.length>0,
+    maxPow:   max(powVals), avgPow: avg(powVals),
+  };
+  gpxData={points,totalDist,maxSpeedMs,minLat,maxLat,minLon,maxLon,minEle,maxEle,totalSecs,fname,sensorStats};
   tfS0=0; tfE0=points.length-1;
 
   // Stats
@@ -1187,6 +1322,24 @@ function parseGPX(xml,fname){
   document.getElementById('st-spd').textContent=cvtSpd(maxSpeedMs).toFixed(1);
   document.getElementById('st-ele').textContent=Math.round(maxEle)+'m';
   document.getElementById('st-pts').textContent=points.length.toLocaleString();
+  // Sensor stats display
+  const ss=gpxData.sensorStats;
+  if(ss.hasHR){
+    document.getElementById('sc-hr').style.display='';
+    document.getElementById('sc-hr-max').style.display='';
+    document.getElementById('st-hr-avg').textContent=ss.avgHR||'—';
+    document.getElementById('st-hr-max').textContent=ss.maxHR||'—';
+  }
+  if(ss.hasCad){
+    document.getElementById('sc-cad').style.display='';
+    document.getElementById('st-cad-avg').textContent=(ss.avgCad||'—')+' rpm';
+  }
+  if(ss.hasPower){
+    document.getElementById('sc-pow').style.display='';
+    document.getElementById('sc-pow-max').style.display='';
+    document.getElementById('st-pow-avg').textContent=ss.avgPow||'—';
+    document.getElementById('st-pow-max').textContent=ss.maxPow||'—';
+  }
   // GPS timestamps
   function fmtGPSStamp(d){
     if(!d) return '—';
@@ -2078,6 +2231,9 @@ function getOverlayBounds(key){
     compass:{w:Math.round(116*fs),h:Math.round(116*fs)},
     grade:{w:Math.round(140*fs),h:Math.round(52*fs)},
     roadname:{w:Math.round(200*fs),h:Math.round(34*fs)},
+    heartrate:{w:Math.round(160*fs),h:Math.round(56*fs)},
+    cadence:{w:Math.round(150*fs),h:Math.round(56*fs)},
+    power:{w:Math.round(160*fs),h:Math.round(56*fs)},
     odometer:{w:Math.round(200*fs),h:Math.round(44*fs)},
   };
   const{w,h}=sizes[key]||{w:100,h:60};
@@ -3617,6 +3773,94 @@ function drawFrameWithPt(n, pt){
     ctx.font=`bold ${Math.round(11*fs)}px 'IBM Plex Mono',monospace`;
     ctx.fillStyle=textColor;ctx.globalAlpha=0.8;ctx.textAlign='left';ctx.textBaseline='middle';
     ctx.fillText('km',cx2+usedW+Math.round(5*fs),oy+panH/2);ctx.globalAlpha=1;
+    ctx.restore();
+  }
+
+  // ── HEART RATE ──
+  if(opts.heartrate){ beginOv('heartrate');
+    const hr = pt.hr;
+    const zColor = hrZoneColor(hr);
+    const panW=Math.round(160*fs), panH=Math.round(56*fs);
+    const{x:hx,y:hy}=posXY(oPos.heartrate,W,H,panW,panH);
+    ctx.save();
+    ctx.fillStyle=`rgba(0,0,0,${panelOp})`;
+    ctx.beginPath();ctx.roundRect(hx,hy,panW,panH,Math.round(7*fs));ctx.fill();
+    ctx.font=`bold ${Math.round(9*fs)}px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle='rgba(255,255,255,0.45)';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('🫀 HR',hx+Math.round(8*fs),hy+Math.round(6*fs));
+    const hrStr = hr!=null ? String(Math.round(hr)) : '--';
+    ctx.font=`bold ${Math.round(26*fs)}px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle=hr!=null?zColor:textColor;ctx.textBaseline='top';
+    ctx.fillText(hrStr,hx+Math.round(8*fs),hy+Math.round(16*fs));
+    const numW=ctx.measureText(hrStr).width;
+    ctx.font=`${Math.round(9*fs)}px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.textBaseline='bottom';
+    ctx.fillText('bpm',hx+Math.round(8*fs)+numW+Math.round(3*fs),hy+panH-Math.round(8*fs));
+    if(hr!=null){
+      const barX=hx+Math.round(8*fs), barY=hy+panH-Math.round(7*fs);
+      const barW=panW-Math.round(16*fs), barH=Math.round(3*fs);
+      ['#4a9ef0','#4af0a0','#f0d04a','#f0a04a','#ff4444'].forEach((col,i)=>{
+        ctx.fillStyle=col;ctx.fillRect(barX+i*(barW/5),barY,barW/5-1,barH);
+      });
+      const pct=Math.min(1,Math.max(0,hr/hrMaxBpm));
+      ctx.fillStyle='#fff';ctx.fillRect(barX+pct*barW-1,barY-Math.round(fs),2,barH+Math.round(2*fs));
+    }
+    ctx.restore();
+  }
+  // ── CADENCE ──
+  if(opts.cadence){ beginOv('cadence');
+    const cad = pt.cad;
+    const panW=Math.round(150*fs), panH=Math.round(56*fs);
+    const{x:cx2,y:cy2}=posXY(oPos.cadence,W,H,panW,panH);
+    ctx.save();
+    ctx.fillStyle=`rgba(0,0,0,${panelOp})`;
+    ctx.beginPath();ctx.roundRect(cx2,cy2,panW,panH,Math.round(7*fs));ctx.fill();
+    ctx.font=`bold ${Math.round(9*fs)}px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle='rgba(255,255,255,0.45)';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('🔄 CADENCE',cx2+Math.round(8*fs),cy2+Math.round(6*fs));
+    const cadStr = cad!=null ? String(Math.round(cad)) : '--';
+    ctx.font=`bold ${Math.round(26*fs)}px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle='#4a9ef0';ctx.textBaseline='top';
+    ctx.fillText(cadStr,cx2+Math.round(8*fs),cy2+Math.round(16*fs));
+    const cW=ctx.measureText(cadStr).width;
+    ctx.font=`${Math.round(9*fs)}px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.textBaseline='bottom';
+    ctx.fillText('rpm',cx2+Math.round(8*fs)+cW+Math.round(3*fs),cy2+panH-Math.round(8*fs));
+    ctx.restore();
+  }
+  // ── POWER ──
+  if(opts.power){ beginOv('power');
+    const pw = pt.power;
+    const pctFTP = (pw!=null&&ftpWatts>0) ? pw/ftpWatts : 0;
+    let pwColor=textColor;
+    if(pw!=null){
+      if(pctFTP<0.55) pwColor='#888888';
+      else if(pctFTP<0.75) pwColor='#4a9ef0';
+      else if(pctFTP<0.90) pwColor='#4af0a0';
+      else if(pctFTP<1.05) pwColor='#f0d04a';
+      else if(pctFTP<1.20) pwColor='#f0a04a';
+      else pwColor='#ff4444';
+    }
+    const panW=Math.round(160*fs), panH=Math.round(56*fs);
+    const{x:pwx,y:pwy}=posXY(oPos.power,W,H,panW,panH);
+    ctx.save();
+    ctx.fillStyle=`rgba(0,0,0,${panelOp})`;
+    ctx.beginPath();ctx.roundRect(pwx,pwy,panW,panH,Math.round(7*fs));ctx.fill();
+    ctx.font=`bold ${Math.round(9*fs)}px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle='rgba(255,255,255,0.45)';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('⚡ POWER',pwx+Math.round(8*fs),pwy+Math.round(6*fs));
+    const pwStr = pw!=null ? String(Math.round(pw)) : '--';
+    ctx.font=`bold ${Math.round(26*fs)}px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle=pwColor;ctx.textBaseline='top';
+    ctx.fillText(pwStr,pwx+Math.round(8*fs),pwy+Math.round(16*fs));
+    const pW2=ctx.measureText(pwStr).width;
+    ctx.font=`${Math.round(9*fs)}px 'IBM Plex Mono',monospace`;
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.textBaseline='bottom';
+    ctx.fillText('W',pwx+Math.round(8*fs)+pW2+Math.round(3*fs),pwy+panH-Math.round(8*fs));
+    if(pw!=null){
+      ctx.textAlign='right';
+      ctx.fillText(Math.round(pctFTP*100)+'% FTP',pwx+panW-Math.round(8*fs),pwy+panH-Math.round(8*fs));
+    }
     ctx.restore();
   }
 

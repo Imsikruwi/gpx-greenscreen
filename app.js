@@ -215,31 +215,300 @@ function setUnit(u,el){ speedUnit=u; document.querySelectorAll('[id^=unit-]').fo
 function setBGHex(val){ if(/^#[0-9a-fA-F]{6}$/.test(val)){ setCustomBG(val); document.getElementById('bg-color-picker').value=val; } }
 function setCustomBG(color){ bgColor=color; document.getElementById('canvasWrapper').style.background=color; document.getElementById('bg-color-picker').value=color; ['green','blue','black','navy'].forEach(k=>{ const b=document.getElementById('bg-'+k); if(b) b.classList.remove('on'); }); document.getElementById('bg-custom').classList.add('on'); drawFrame(curFrame); }
 function setBG(color,id,el){ bgColor=color; document.getElementById('canvasWrapper').style.background=color; const hexInp=document.getElementById('bg-hex-input'); if(hexInp) hexInp.value=color; const cpick=document.getElementById('bg-color-picker'); if(cpick) cpick.value=color; ['green','blue','black','navy'].forEach(k=>{const b=document.getElementById('bg-'+k);if(b)b.classList.remove('on')}); el.classList.add('on'); drawFrame(curFrame); }
-function toggleOpt(key,row){ opts[key]=!opts[key]; const tog=document.getElementById('tog-'+key); if(tog)tog.classList.toggle('on',opts[key]); const card=document.getElementById('oc-'+key); if(card)card.classList.toggle('off',!opts[key]); drawFrame(curFrame); }
+function toggleOpt(key,row){ opts[key]=!opts[key]; const tog=document.getElementById('tog-'+key); if(tog)tog.classList.toggle('on',opts[key]); const card=document.getElementById('oc-'+key); if(card)card.classList.toggle('off',!opts[key]); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
 function setPos(key,pos,el){ oPos[key]=pos; const grid=document.getElementById('pos-'+key); if(grid)grid.querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); drawFrame(curFrame); }
 function setSpdMax(v,el){ spdMaxMode=v==='auto'?'auto':'custom'; spdMaxCustom=v==='auto'?0:parseInt(v); document.getElementById('spd-max-chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); drawFrame(curFrame); }
-function setSpdStyle(style,el){ spdStyle=style; document.querySelectorAll('[id^=spd-style-]').forEach(b=>b.classList.remove('on')); el.classList.add('on'); drawFrame(curFrame); }
+function setSpdStyle(style,el){ spdStyle=style; document.querySelectorAll('[id^=spd-style-]').forEach(b=>b.classList.remove('on')); el.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
 function customSpdMax(){ const unit=spdLabel(); const cur=spdMaxCustom||Math.round(cvtSpd(gpxData?.maxSpeedMs||30)); const v=prompt('Max speed for bar ('+unit+'):', cur); if(v===null)return; const n=parseFloat(v); if(isNaN(n)||n<=0){notif('Invalid value','#ff5c5c');return} let ms=n; if(speedUnit==='kmh')ms=n/3.6; else if(speedUnit==='mph')ms=n/2.237; else if(speedUnit==='pace')ms=ms>0?1000/(n*60):0; spdMaxMode='custom'; spdMaxCustom=ms; document.getElementById('spd-max-chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); document.getElementById('spd-max-custom').textContent=n+' '+unit; document.getElementById('spd-max-custom').classList.add('on'); drawFrame(curFrame); }
 function setGpsFmt(fmt,el){ gpsFmt=fmt; el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); drawFrame(curFrame); }
-function setCoordFmt(fmt,el){ coordFmt=fmt; el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); drawFrame(curFrame); }
-function toggleCoordIcon(row){ coordShowIcon=!coordShowIcon; const tog=document.getElementById('tog-coordicon'); if(tog)tog.classList.toggle('on',coordShowIcon); drawFrame(curFrame); }
+function setCoordFmt(fmt,el){ coordFmt=fmt; el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function toggleCoordIcon(row){ coordShowIcon=!coordShowIcon; const tog=document.getElementById('tog-coordicon'); if(tog)tog.classList.toggle('on',coordShowIcon); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
 function toggleGpsDate(row){ gpsShowDate=!gpsShowDate; const tog=document.getElementById('tog-gpsdate'); if(tog)tog.classList.toggle('on',gpsShowDate); drawFrame(curFrame); }
 function setTextHex(val){ if(/^#[0-9a-fA-F]{6}$/.test(val)){ textColor=val; const cp=document.getElementById('text-color-picker'); if(cp) cp.value=val; drawFrame(curFrame); } }
 function setRouteColor(c,el){ mapRouteColor=c; document.querySelectorAll('[id^="rc-"]').forEach(s=>s.classList.remove('on')); if(el) el.classList.add('on'); const rp=document.getElementById('route-color-picker'); if(rp) rp.value=c; drawFrame(curFrame); }
 function setDotColor(c,el){ mapDotColor=c; document.querySelectorAll('[id^="dc-"]').forEach(s=>s.classList.remove('on')); if(el) el.classList.add('on'); const dp=document.getElementById('dot-color-picker'); if(dp) dp.value=c; drawFrame(curFrame); }
 function setColor(c,el){ textColor=c; if(el){ el.closest('div').querySelectorAll('.sw').forEach(s=>s.classList.remove('on')); el.classList.add('on'); } const cp=document.getElementById('text-color-picker'); if(cp) cp.value=(c.length===4?c+'000':c).slice(0,7); drawFrame(curFrame); }
-function setFS(s,el){ const map={xs:.7,md:1,lg:1.35,xl:1.7,xxl:2.2,xxxl:3.0}; fontScale=map[s]||1; document.querySelectorAll('.chip').forEach(b=>{if(b.closest('.chips')&&b.onclick&&b.getAttribute('onclick')&&b.getAttribute('onclick').startsWith('setFS('))b.classList.remove('on')}); if(el)el.classList.add('on'); const sl=document.getElementById('fs-slider'); if(sl){sl.value=Math.round(fontScale*100)} document.getElementById('fsVal').textContent=fontScale.toFixed(2)+'×'; drawFrame(curFrame); }
-function setFSSlider(v){ fontScale=parseInt(v)/100; document.querySelectorAll('.chip').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').startsWith('setFS('))b.classList.remove('on')}); document.getElementById('fsVal').textContent=fontScale.toFixed(2)+'×'; drawFrame(curFrame); }
+function setFS(s,el){ const map={xs:.7,md:1,lg:1.35,xl:1.7,xxl:2.2,xxxl:3.0}; fontScale=map[s]||1; document.querySelectorAll('.chip').forEach(b=>{if(b.closest('.chips')&&b.onclick&&b.getAttribute('onclick')&&b.getAttribute('onclick').startsWith('setFS('))b.classList.remove('on')}); if(el)el.classList.add('on'); const sl=document.getElementById('fs-slider'); if(sl){sl.value=Math.round(fontScale*100)} document.getElementById('fsVal').textContent=fontScale.toFixed(2)+'×'; drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setFSSlider(v){ fontScale=parseInt(v)/100; document.querySelectorAll('.chip').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').startsWith('setFS('))b.classList.remove('on')}); document.getElementById('fsVal').textContent=fontScale.toFixed(2)+'×'; drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
 function setDistDec(n,el){ distDecimals=n; el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); drawFrame(curFrame); }
-function toggleDistOdo(row){ distOdoMode=!distOdoMode; const t=document.getElementById('tog-distodo'); if(t)t.classList.toggle('on',distOdoMode); const sz=document.getElementById('odo-size-opts'); if(sz)sz.style.display=distOdoMode?'block':'none'; drawFrame(curFrame); }
+function toggleDistOdo(row){ distOdoMode=!distOdoMode; const t=document.getElementById('tog-distodo'); if(t)t.classList.toggle('on',distOdoMode); const sz=document.getElementById('odo-size-opts'); if(sz)sz.style.display=distOdoMode?'block':'none'; drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
 function toggleOdoBorder(row){ odoShowBorder=!odoShowBorder; const t=document.getElementById('tog-odoborder'); if(t)t.classList.toggle('on',odoShowBorder); drawFrame(curFrame); }
-function setOdoScale2(v){ odoScale2=parseInt(v)/100; document.getElementById('odoScaleVal2').textContent=odoScale2.toFixed(1)+'×'; drawFrame(curFrame); }
+function setOdoScale2(v){ odoScale2=parseInt(v)/100; document.getElementById('odoScaleVal2').textContent=odoScale2.toFixed(1)+'×'; drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setCompassStyle(style,el){ window._compassStyle=style; if(el&&el.closest('.chips')){ el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
 function handleLandingFile(input){ if(input.files&&input.files[0]){ const mainInput=document.getElementById('fileInput'); const file=input.files[0]; const reader=new FileReader(); reader.onload=e=>{try{parseGPX(e.target.result,file.name)}catch(err){notif('Parse error: '+err.message,'#ff5c5c')}}; reader.readAsText(file); } }
 function showMainApp(){ const lp=document.getElementById('landingPage'); if(lp){lp.style.opacity='0';lp.style.transition='opacity .3s';setTimeout(()=>lp.style.display='none',300);} const bell=document.getElementById('notifBellBtn'); if(bell) bell.style.display='flex'; }
-function savePreset(){ try{ const preset={ version:1, opts:{...opts}, oPos:JSON.parse(JSON.stringify(oPos)), textColor, fontScale, panelOp, bgColor, speedUnit, spdStyle, spdMaxMode, spdMaxCustom, gpsFmt, gpsShowDate, distDecimals, distShowElev, distOdoMode, odoScale, odoScale2, odoShowBorder, spdDistGap: window._spdDistGap||4, osmMapShape, osmShowRoute, mapBgStyle, mapRouteColor, mapDotColor, mapShowNorth, coordFmt, coordShowIcon, canvasOrient, renderFmt, renderRes, fpsVal, bitrateVal, gforceScale: window._gforceScale||2, compassStyle: window._compassStyle||'rose', }; const blob=new Blob([JSON.stringify(preset,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='GPXGreenScreen_preset.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); notif('✓ Preset saved'); }catch(err){ notif('Save error: '+err.message,'#ff5c5c'); console.error(err); } }
+function savePreset(){
+  try{
+    const preset = {
+      version: 2,
+      // ── Overlay on/off ──
+      opts: {...opts},
+      // ── Posisi (string anchor atau {x,y} custom) ──
+      oPos: JSON.parse(JSON.stringify(oPos)),
+      // ── Skala per-overlay ──
+      oScale: JSON.parse(JSON.stringify(oScale)),
+      // ── Background per-overlay & global ──
+      overlayBg: JSON.parse(JSON.stringify(overlayBg)),
+      showOverlayBg,
+      // ── Global style ──
+      textColor, fontScale, panelOp, bgColor,
+      // ── Speed overlay ──
+      speedUnit, spdStyle, spdMaxMode, spdMaxCustom,
+      spdDistGap: window._spdDistGap||4,
+      // ── GPS Time ──
+      gpsFmt, gpsShowDate,
+      // ── Distance / Odometer ──
+      distDecimals, distShowElev, distOdoMode,
+      odoScale, odoScale2, odoShowBorder,
+      // ── Map ──
+      osmMapShape, osmMapSize, osmZoom, osmStyle,
+      osmTint, osmBrightness, osmContrast,
+      osmShowRoute, osmShowHeading, osmUseOSM,
+      mapBgStyle, mapRouteColor, mapDotColor, mapShowNorth,
+      // ── Coords ──
+      coordFmt, coordShowIcon,
+      // ── G-Force / Compass ──
+      gforceScale: window._gforceScale||2,
+      compassStyle: window._compassStyle||'rose',
+      // ── HR / Power ──
+      hrMaxBpm, ftpWatts,
+      // ── Export / render ──
+      exportTransparent, renderFmt, renderRes, fpsVal, bitrateVal,
+      // ── Canvas orientation ──
+      canvasOrient,
+    };
+    const blob = new Blob([JSON.stringify(preset,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'GPXGreenScreen_preset.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    notif('✓ Preset saved');
+  }catch(err){ notif('Save error: '+err.message,'#ff5c5c'); console.error(err); }
+}
+
 function loadPresetClick(){ document.getElementById('presetFileInput').click(); }
-function loadPresetFile(input){ const file=input.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=e=>{ try{ applyPreset(JSON.parse(e.target.result)); notif('✓ Preset loaded'); }catch(err){ notif('Error loading preset: '+err.message,'#ff5c5c'); } }; reader.readAsText(file); input.value=''; }
-function applyPreset(p){ if(!p||p.version!==1){notif('Invalid preset file','#ff5c5c');return;} try{ if(p.opts) Object.assign(opts, p.opts); if(p.oPos) Object.assign(oPos, p.oPos); if(p.textColor) textColor=p.textColor; if(p.fontScale!=null) fontScale=p.fontScale; if(p.panelOp!=null) panelOp=p.panelOp; if(p.bgColor){ bgColor=p.bgColor; const cw=document.getElementById('canvasWrapper'); if(cw)cw.style.background=bgColor; } if(p.speedUnit) speedUnit=p.speedUnit; if(p.spdStyle) spdStyle=p.spdStyle; if(p.spdMaxMode) spdMaxMode=p.spdMaxMode; if(p.spdMaxCustom!=null) spdMaxCustom=p.spdMaxCustom; if(p.gpsFmt) gpsFmt=p.gpsFmt; if(p.gpsShowDate!=null) gpsShowDate=p.gpsShowDate; if(p.distDecimals!=null) distDecimals=p.distDecimals; if(p.distShowElev!=null) distShowElev=p.distShowElev; if(p.distOdoMode!=null) distOdoMode=p.distOdoMode; if(p.odoScale!=null) odoScale=p.odoScale; if(p.odoScale2!=null) odoScale2=p.odoScale2; if(p.odoShowBorder!=null) odoShowBorder=p.odoShowBorder; if(p.spdDistGap!=null) window._spdDistGap=p.spdDistGap; if(p.osmMapShape) osmMapShape=p.osmMapShape; if(p.osmShowRoute!=null) osmShowRoute=p.osmShowRoute; if(p.mapBgStyle) mapBgStyle=p.mapBgStyle; if(p.mapRouteColor) mapRouteColor=p.mapRouteColor; if(p.mapDotColor) mapDotColor=p.mapDotColor; if(p.mapShowNorth!=null) mapShowNorth=p.mapShowNorth; if(p.coordFmt) coordFmt=p.coordFmt; if(p.coordShowIcon!=null) coordShowIcon=p.coordShowIcon; if(p.fpsVal!=null) fpsVal=p.fpsVal; if(p.bitrateVal!=null) bitrateVal=p.bitrateVal; if(p.renderFmt) renderFmt=p.renderFmt; if(p.renderRes) renderRes=p.renderRes; if(p.gforceScale!=null) window._gforceScale=p.gforceScale; if(p.compassStyle) window._compassStyle=p.compassStyle; Object.keys(opts).forEach(key=>{ const tog=document.getElementById('tog-'+key); if(tog) tog.classList.toggle('on',opts[key]); const card=document.getElementById('oc-'+key); if(card) card.classList.toggle('off',!opts[key]); }); if(p.canvasOrient){ canvasOrient=p.canvasOrient; const ob=document.getElementById('orient-'+canvasOrient); if(ob) ob.click(); } if(gpxData) drawFrame(curFrame); notif('✓ Preset loaded'); }catch(err){ notif('Load error: '+err.message,'#ff5c5c'); } }
+
+function loadPresetFile(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{ applyPreset(JSON.parse(e.target.result)); }
+    catch(err){ notif('Error loading preset: '+err.message,'#ff5c5c'); }
+  };
+  reader.readAsText(file); input.value='';
+}
+
+function applyPreset(p){
+  if(!p || (p.version!==1 && p.version!==2)){ notif('Invalid preset file','#ff5c5c'); return; }
+  try{
+
+    // ── Overlay on/off ──
+    if(p.opts) Object.assign(opts, p.opts);
+
+    // ── Posisi ──
+    if(p.oPos) Object.assign(oPos, p.oPos);
+
+    // ── Skala per-overlay ──
+    if(p.oScale){ Object.keys(oScale).forEach(k=>delete oScale[k]); Object.assign(oScale, p.oScale); }
+
+    // ── Background per-overlay & global ──
+    if(p.overlayBg !== undefined){ Object.keys(overlayBg).forEach(k=>delete overlayBg[k]); Object.assign(overlayBg, p.overlayBg); }
+    if(p.showOverlayBg !== undefined) showOverlayBg = p.showOverlayBg;
+
+    // ── Global style ──
+    if(p.textColor)       textColor = p.textColor;
+    if(p.fontScale!=null) fontScale = p.fontScale;
+    if(p.panelOp!=null)   panelOp   = p.panelOp;
+    if(p.bgColor){
+      bgColor = p.bgColor;
+      const cw = document.getElementById('canvasWrapper'); if(cw) cw.style.background = bgColor;
+    }
+
+    // ── Speed ──
+    if(p.speedUnit)         speedUnit    = p.speedUnit;
+    if(p.spdStyle)          spdStyle     = p.spdStyle;
+    if(p.spdMaxMode)        spdMaxMode   = p.spdMaxMode;
+    if(p.spdMaxCustom!=null) spdMaxCustom = p.spdMaxCustom;
+    if(p.spdDistGap!=null)  window._spdDistGap = p.spdDistGap;
+
+    // ── GPS Time ──
+    if(p.gpsFmt)           gpsFmt      = p.gpsFmt;
+    if(p.gpsShowDate!=null) gpsShowDate = p.gpsShowDate;
+
+    // ── Distance / Odometer ──
+    if(p.distDecimals!=null)  distDecimals  = p.distDecimals;
+    if(p.distShowElev!=null)  distShowElev  = p.distShowElev;
+    if(p.distOdoMode!=null)   distOdoMode   = p.distOdoMode;
+    if(p.odoScale!=null)      odoScale      = p.odoScale;
+    if(p.odoScale2!=null)     odoScale2     = p.odoScale2;
+    if(p.odoShowBorder!=null) odoShowBorder = p.odoShowBorder;
+
+    // ── Map ──
+    if(p.osmMapShape)         osmMapShape    = p.osmMapShape;
+    if(p.osmMapSize)          osmMapSize     = p.osmMapSize;
+    if(p.osmZoom!=null)       osmZoom        = p.osmZoom;
+    if(p.osmStyle)            osmStyle       = p.osmStyle;
+    if(p.osmTint)             osmTint        = p.osmTint;
+    if(p.osmBrightness!=null) osmBrightness  = p.osmBrightness;
+    if(p.osmContrast!=null)   osmContrast    = p.osmContrast;
+    if(p.osmShowRoute!=null)  osmShowRoute   = p.osmShowRoute;
+    if(p.osmShowHeading!=null) osmShowHeading = p.osmShowHeading;
+    if(p.osmUseOSM!=null)     osmUseOSM      = p.osmUseOSM;
+    if(p.mapBgStyle)          mapBgStyle     = p.mapBgStyle;
+    if(p.mapRouteColor)       mapRouteColor  = p.mapRouteColor;
+    if(p.mapDotColor)         mapDotColor    = p.mapDotColor;
+    if(p.mapShowNorth!=null)  mapShowNorth   = p.mapShowNorth;
+
+    // ── Coords ──
+    if(p.coordFmt)           coordFmt      = p.coordFmt;
+    if(p.coordShowIcon!=null) coordShowIcon = p.coordShowIcon;
+
+    // ── G-Force / Compass ──
+    if(p.gforceScale!=null)  window._gforceScale  = p.gforceScale;
+    if(p.compassStyle)       window._compassStyle = p.compassStyle;
+
+    // ── HR / Power ──
+    if(p.hrMaxBpm!=null)  hrMaxBpm  = p.hrMaxBpm;
+    if(p.ftpWatts!=null)  ftpWatts  = p.ftpWatts;
+
+    // ── Export / render ──
+    if(p.exportTransparent!=null) exportTransparent = p.exportTransparent;
+    if(p.renderFmt)   renderFmt  = p.renderFmt;
+    if(p.renderRes)   renderRes  = p.renderRes;
+    if(p.fpsVal!=null) fpsVal    = p.fpsVal;
+    if(p.bitrateVal!=null) bitrateVal = p.bitrateVal;
+
+    // ══════════════════════════════════════════
+    // SYNC UI
+    // ══════════════════════════════════════════
+
+    // Overlay toggle cards
+    Object.keys(opts).forEach(key=>{
+      const tog  = document.getElementById('tog-'+key);
+      const card = document.getElementById('oc-'+key);
+      if(tog)  tog.classList.toggle('on', !!opts[key]);
+      if(card) card.classList.toggle('off', !opts[key]);
+    });
+
+    // Background per-overlay toggles
+    document.getElementById('tog-global-bg')?.classList.toggle('on', showOverlayBg);
+    document.querySelectorAll('[id^="tog-bg-"]').forEach(el=>{
+      const key = el.id.replace('tog-bg-','');
+      const val = overlayBg[key] !== undefined ? overlayBg[key] : showOverlayBg;
+      el.classList.toggle('on', val);
+    });
+
+    // Font scale slider
+    const fsSlider = document.getElementById('fs-slider');
+    if(fsSlider){ fsSlider.value = Math.round(fontScale*100); document.getElementById('fsVal').textContent = fontScale.toFixed(2)+'×'; }
+
+    // Opacity slider
+    const opSlider = document.querySelector('input[oninput="setOp(this.value)"]');
+    if(opSlider){ opSlider.value = Math.round(panelOp*100); document.getElementById('opVal').textContent = Math.round(panelOp*100)+'%'; }
+
+    // BG color chips
+    const bgMap = {'#00b140':'green','#0047AB':'blue','#000000':'black','#1a1a2e':'navy'};
+    document.querySelectorAll('.chips [id^="bg-"]').forEach(b=>b.classList.remove('on'));
+    const knownKey = bgMap[bgColor.toLowerCase()];
+    if(knownKey) document.getElementById('bg-'+knownKey)?.classList.add('on');
+    else { document.getElementById('bg-custom')?.classList.add('on'); }
+    const bgPicker = document.getElementById('bg-color-picker');
+    const bgHex    = document.getElementById('bg-hex-input');
+    if(bgPicker) bgPicker.value = bgColor;
+    if(bgHex)    bgHex.value   = bgColor;
+
+    // Speed unit
+    document.querySelectorAll('[id^="unit-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('unit-'+speedUnit)?.classList.add('on');
+
+    // Speed style
+    document.querySelectorAll('[id^="spd-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('spd-style-'+spdStyle)?.classList.add('on');
+
+    // Speed max mode
+    document.querySelectorAll('[id^="spd-max-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('spd-max-'+spdMaxMode)?.classList.add('on');
+
+    // GPS format
+    document.querySelectorAll('[id^="tf-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('tf-'+gpsFmt)?.classList.add('on');
+    document.getElementById('tog-gpsdate')?.classList.toggle('on', gpsShowDate);
+
+    // Map
+    document.querySelectorAll('[id^="osm-shape-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('osm-shape-'+osmMapShape)?.classList.add('on');
+    document.querySelectorAll('[id^="osm-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('osm-style-'+osmStyle)?.classList.add('on');
+    document.querySelectorAll('[id^="osm-tint-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('osm-tint-'+osmTint)?.classList.add('on');
+    document.querySelectorAll('[id^="map-size-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('map-size-'+osmMapSize)?.classList.add('on');
+    document.querySelectorAll('[id^="mapbg-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('mapbg-'+mapBgStyle)?.classList.add('on');
+    document.getElementById('tog-maproute')?.classList.toggle('on', osmShowRoute);
+    document.getElementById('tog-mapnorth')?.classList.toggle('on', mapShowNorth);
+    document.getElementById('tog-osmheading')?.classList.toggle('on', osmShowHeading);
+    const ozSlider = document.getElementById('osmZoomSlider');
+    if(ozSlider){ ozSlider.value = osmZoom; const ozVal = document.getElementById('osmZoomVal'); if(ozVal) ozVal.textContent = osmZoom; }
+    const brSlider = document.getElementById('osmBrightnessSlider');
+    if(brSlider) brSlider.value = osmBrightness;
+
+    // Coords
+    document.querySelectorAll('[id^="coord-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('coord-'+coordFmt)?.classList.add('on');
+    document.getElementById('tog-coordicon')?.classList.toggle('on', coordShowIcon);
+
+    // Compass style
+    document.querySelectorAll('[id^="compass-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('compass-style-'+(window._compassStyle||'rose'))?.classList.add('on');
+
+    // HR max slider
+    const hrSlider = document.getElementById('hr-slider');
+    if(hrSlider){ hrSlider.value = hrMaxBpm; const hrVal = document.getElementById('hrMaxVal'); if(hrVal) hrVal.textContent = hrMaxBpm+' bpm'; }
+
+    // FTP slider
+    const ftpSlider = document.getElementById('ftp-slider');
+    if(ftpSlider){ ftpSlider.value = ftpWatts; const ftpVal = document.getElementById('ftpVal'); if(ftpVal) ftpVal.textContent = ftpWatts+' W'; }
+
+    // Export transparent
+    document.getElementById('tog-export-trans')?.classList.toggle('on', exportTransparent);
+
+    // Render format chips
+    document.querySelectorAll('[id^="fmt-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('fmt-'+renderFmt)?.classList.add('on');
+
+    // Resolution chips
+    document.querySelectorAll('[id^="res-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('res-'+renderRes)?.classList.add('on');
+
+    // FPS chips
+    document.querySelectorAll('.chips .chip[onclick^="setFPS"]').forEach(b=>{
+      b.classList.toggle('on', b.textContent.trim() === String(fpsVal));
+    });
+
+    // Bitrate slider
+    const brSlider2 = document.getElementById('br-slider');
+    if(brSlider2){
+      brSlider2.value = bitrateVal;
+      document.getElementById('br-label').textContent = bitrateVal+' kbps';
+      document.getElementById('br-tag').textContent   = (bitrateVal/1000).toFixed(1)+' Mbps';
+      document.querySelectorAll('.br-presets .chip').forEach(b=>b.classList.remove('on'));
+      document.querySelector(`.br-presets .chip[onclick*="${bitrateVal}"]`)?.classList.add('on');
+    }
+
+    // Canvas orientation
+    if(p.canvasOrient){
+      canvasOrient = p.canvasOrient;
+      const ob = document.getElementById('orient-'+canvasOrient);
+      if(ob) ob.click();
+    }
+
+    if(gpxData) drawFrame(curFrame);
+    if(window._dragHandle) window._dragHandle.updateHandles();
+    notif('✓ Preset loaded');
+  }catch(err){ notif('Load error: '+err.message,'#ff5c5c'); console.error(err); }
+}
 function toggleFullscreen(){ const pc=document.getElementById('centerPanel'); if(!document.fullscreenElement&&!document.webkitFullscreenElement){ const fn=pc.requestFullscreen||pc.webkitRequestFullscreen||pc.mozRequestFullScreen; if(fn) fn.call(pc); document.getElementById('btnFullscreen').textContent='✕ Exit'; } else { const fn=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen; if(fn) fn.call(document); document.getElementById('btnFullscreen').textContent='⛶'; } }
 document.addEventListener('keydown',e=>{ if((e.key==='f'||e.key==='F')&&document.activeElement.tagName!=='INPUT') toggleFullscreen(); });
 document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement){ const b=document.getElementById('btnFullscreen'); if(b) b.textContent='⛶'; } });
@@ -249,32 +518,40 @@ function toggleDistElev(row){ distShowElev=!distShowElev; const tog=document.get
 function toggleGlobalBg(row){
   showOverlayBg=!showOverlayBg;
   document.getElementById('tog-global-bg')?.classList.toggle('on',showOverlayBg);
-  // Reset semua override per-overlay, lalu sinkronkan UI
+  // Reset semua override per-overlay ke nilai global
   Object.keys(overlayBg).forEach(k=>delete overlayBg[k]);
   document.querySelectorAll('[id^="tog-bg-"]').forEach(el=>el.classList.toggle('on',showOverlayBg));
   drawFrame(curFrame);
 }
 function toggleOverlayBg(key,row){
-  // Per-overlay: jika belum punya override, ambil dari global dulu lalu flip
-  const cur = overlayBg[key] !== undefined ? overlayBg[key] : showOverlayBg;
-  overlayBg[key] = !cur;
-  document.getElementById('tog-bg-'+key)?.classList.toggle('on', overlayBg[key]);
+  // Baca state saat ini dari toggle UI — ini sumber kebenaran visual
+  const togEl = document.getElementById('tog-bg-'+key);
+  const curOn = togEl ? togEl.classList.contains('on') : (overlayBg[key]!==undefined ? overlayBg[key] : showOverlayBg);
+  overlayBg[key] = !curOn;
+  togEl?.classList.toggle('on', overlayBg[key]);
   drawFrame(curFrame);
 }
 function setOp(v){ panelOp=parseInt(v)/100; document.getElementById('opVal').textContent=v+'%'; drawFrame(curFrame); }
 function confirmDialog(title, msg, onConfirm){ const bd=document.createElement('div'); bd.className='confirm-backdrop'; bd.innerHTML=`<div class="confirm-box"><div class="confirm-title">${title}</div><div class="confirm-msg">${msg}</div><div class="confirm-btns"><button class="bs" onclick="this.closest('.confirm-backdrop').remove()">Cancel</button><button class="bp" id="confirm-ok" style="padding:7px 18px">Confirm</button></div></div>`; document.body.appendChild(bd); bd.querySelector('#confirm-ok').onclick=()=>{ bd.remove(); onConfirm(); }; bd.addEventListener('click',e=>{ if(e.target===bd)bd.remove(); }); }
-function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,roadname:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',roadname:'bc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'], ['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); 
-document.getElementById('tog-mapnorth').classList.remove('on'); // Reset status global overlay BG ke OFF
-      showOverlayBg = false;
-      document.getElementById('tog-global-bg')?.classList.remove('on');
-      document.querySelectorAll('[id^="tog-bg-"]').forEach(el => el.classList.remove('on')); 
-	  document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on')); 
-	  document.querySelector('.sw[style*="#fff"]')?.classList.add('on'); 
-	  document.getElementById('canvasWrapper').style.background=bgColor; (function(){ const{W,H}=resWH(); canvas.width=W; canvas.height=H; })(); 
-	  document.getElementById('opVal').textContent='0%'; 
-	  document.getElementById('fsVal').textContent='2.20×'; 
-	  document.getElementById('fs-slider').value=220; 
-	  document.querySelectorAll('.chip').forEach(b=>{ const oc=b.getAttribute('onclick'); if(oc&&oc.startsWith('setFS(')){ b.classList.toggle('on', oc==="setFS('xxl',this)"); } }); if(window._dragHandle)window._dragHandle.updateHandles(); if(gpxData)drawFrame(curFrame); notif('Reset to default settings'); }); }
+function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0.3; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','30%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'], ['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); 
+document.getElementById('tog-mapnorth').classList.remove('on');
+      // Reset overlay BG ke ON, opacity 30%
+      showOverlayBg = true; panelOp = 0.3;
+      document.getElementById('tog-global-bg')?.classList.add('on');
+      document.querySelectorAll('[id^="tog-bg-"]').forEach(el => el.classList.add('on'));
+      document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on')); 
+      document.querySelector('.sw[style*="#fff"]')?.classList.add('on'); 
+      document.getElementById('canvasWrapper').style.background=bgColor; (function(){ const{W,H}=resWH(); canvas.width=W; canvas.height=H; })(); 
+      document.getElementById('opVal').textContent='30%';
+      const opSliderR = document.querySelector('input[oninput="setOp(this.value)"]');
+      if(opSliderR) opSliderR.value = 30;
+      document.getElementById('fsVal').textContent='2.20×'; 
+      document.getElementById('fs-slider').value=220;
+      // Reset font ke mono
+      overlayFont = 'mono';
+      document.querySelectorAll('#overlay-font-chips .chip').forEach(b=>b.classList.remove('on'));
+      document.getElementById('ofont-mono')?.classList.add('on');
+      document.querySelectorAll('.chip').forEach(b=>{ const oc=b.getAttribute('onclick'); if(oc&&oc.startsWith('setFS(')){ b.classList.toggle('on', oc==="setFS('xxl',this)"); } }); if(window._dragHandle)window._dragHandle.updateHandles(); if(gpxData)drawFrame(curFrame); notif('Reset to default settings'); }); }
 function clearGPX(){ confirmDialog('Clear GPX','Remove the current GPX file and return to the start screen?',()=>{ gpxData=null; curFrame=0; tfS0=0; tfE0=0; playing=false; cancelAnimationFrame(rafId); document.getElementById('btnPlay').textContent='▶'; document.getElementById('statsSection').style.display='none'; document.getElementById('fmtSection').style.display='none'; document.getElementById('rightPanel').style.display='none'; document.getElementById('tfSection').style.display='none'; document.getElementById('playbar').classList.remove('vis'); document.getElementById('vsb').classList.remove('vis'); document.getElementById('emptyState').style.display='flex'; document.getElementById('btnRender').disabled=true; document.getElementById('btnDownload').style.display='none'; document.getElementById('rpWrap').classList.remove('vis'); const dz2=document.getElementById('dropZone'); dz2.classList.remove('loaded'); dz2.querySelector('.drop-title').textContent='Drop .gpx file here'; dz2.querySelector('.drop-sub').textContent='or click to browse'; document.getElementById('fileInput').value=''; const{W,H}=resWH(); ctx.clearRect(0,0,W,H); ctx.fillStyle=bgColor; ctx.fillRect(0,0,W,H); osmTileCache.clear(); vecCache.clear(); if(window._dragHandle)window._dragHandle.updateHandles(); const pbSec=document.getElementById('previewBgSection'); if(pbSec) pbSec.style.display='none'; notif('GPX cleared'); }); }
 
 // ═══════════════════════════════════════════════════════════
@@ -282,8 +559,8 @@ function clearGPX(){ confirmDialog('Clear GPX','Remove the current GPX file and 
 // ═══════════════════════════════════════════════════════════
 function setMapMode(mode, el){ osmUseOSM = (mode === 'osm'); if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
 function setMapBg(style, el){ mapBgStyle = style; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
-function setMapShape(shape, el){ osmMapShape = shape; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
-function setMapSize(sz, el){ osmMapSize = sz; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
+function setMapShape(shape, el){ osmMapShape = shape; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setMapSize(sz, el){ osmMapSize = sz; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
 function setOsmStyle(style, el){ osmStyle = style; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
 function setOsmZoom(z){ osmZoom = parseInt(z); const zl = document.getElementById('osmZoomVal'); if(zl) zl.textContent = z; drawFrame(curFrame); }
 function setOsmTint(tint, el){ osmTint = tint; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
@@ -313,8 +590,12 @@ document.getElementById('canvasWrapper').style.background=bgColor;
 
 const _initW = canvas.width || 1920;
 const _initH = canvas.height || 1080;
-ctx.fillStyle = bgColor; // bgColor mengambil nilai '#00b140' dari state.js
+ctx.fillStyle = bgColor;
 ctx.fillRect(0, 0, _initW, _initH);
+
+// Sync semua toggle BG ke nilai default showOverlayBg
+document.getElementById('tog-global-bg')?.classList.toggle('on', showOverlayBg);
+document.querySelectorAll('[id^="tog-bg-"]').forEach(el=>el.classList.toggle('on', showOverlayBg));
 
 
 // ═══════════════════════════════════════════════════════════
@@ -386,3 +667,59 @@ function clearPreviewBg(){
   notif('Preview background removed');
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// OVERLAY FONT
+// ═══════════════════════════════════════════════════════════
+function setOverlayFont(font, el){
+  overlayFont = font;
+  document.querySelectorAll('#overlay-font-chips .chip').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  drawFrame(curFrame);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CUSTOM WATERMARK / LOGO
+// ═══════════════════════════════════════════════════════════
+function loadCustomWatermark(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      customWatermarkImage = img;
+      document.getElementById('wmLoaded').style.display = 'flex';
+      const short = file.name.length > 24 ? file.name.slice(0,22)+'…' : file.name;
+      document.getElementById('wmFileName').textContent = short;
+      const btn = document.getElementById('wmUploadBtn');
+      btn.innerHTML = `<input type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" id="wmImageInput" onchange="loadCustomWatermark(this)" style="display:none">🔄 Change Logo`;
+      drawFrame(curFrame);
+      if(window._dragHandle) window._dragHandle.updateHandles();
+      notif('Custom watermark loaded');
+    };
+    img.onerror = () => notif('Failed to load image','#ff5c5c');
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function setWmOpacity(v){
+  customWatermarkOpacity = parseInt(v)/100;
+  document.getElementById('wmOpacityVal').textContent = v+'%';
+  drawFrame(curFrame);
+}
+
+function clearCustomWatermark(){
+  customWatermarkImage = null;
+  customWatermarkOpacity = 1.0;
+  document.getElementById('wmLoaded').style.display = 'none';
+  document.getElementById('wmFileName').textContent = '—';
+  document.getElementById('wm-opacity-slider').value = 100;
+  document.getElementById('wmOpacityVal').textContent = '100%';
+  const btn = document.getElementById('wmUploadBtn');
+  if(btn) btn.innerHTML = `<input type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" id="wmImageInput" onchange="loadCustomWatermark(this)" style="display:none">📷 Upload PNG / JPG Logo`;
+  drawFrame(curFrame);
+  if(window._dragHandle) window._dragHandle.updateHandles();
+  notif('Watermark reset to default');
+}

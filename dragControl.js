@@ -4,24 +4,228 @@
 const oScale = {};
 
 function getOverlayBounds(key){
-  const{W,H}=resWH(); const fs=fontScale*(oScale[key]||1);
-  const sizes={ speed:{w:Math.round(260*fs),h:Math.round(100*fs)}, map:{w:Math.round(osmMapPxSize()*fontScale*(oScale[key]||1)*fs/fontScale),h:Math.round(osmMapPxSize()*fontScale*(oScale[key]||1)*fs/fontScale)}, info:{w:Math.round(210*fs),h:Math.round(118*fs)}, gpstime:{w:Math.round(200*fs),h:Math.round(58*fs)}, coords:{w:Math.round(200*fs),h:Math.round(44*fs)}, arc:{w:Math.round(108*fs),h:Math.round(108*fs)}, elev:{w:Math.round(310*fs),h:Math.round(74*fs)}, distov:{w:Math.round(140*fs),h:Math.round(42*fs)}, gforce:{w:Math.round(130*fs),h:Math.round(130*fs)}, compass:{w:Math.round(116*fs),h:Math.round(116*fs)}, grade:{w:Math.round(140*fs),h:Math.round(52*fs)}, roadname:{w:Math.round(200*fs),h:Math.round(34*fs)}, heartrate:{w:Math.round(160*fs),h:Math.round(56*fs)}, cadence:{w:Math.round(150*fs),h:Math.round(56*fs)}, power:{w:Math.round(160*fs),h:Math.round(56*fs)}, odometer:{w:Math.round(200*fs),h:Math.round(44*fs)},watermark:{w:Math.round(210*fs),h:Math.round(28*fs)} };
-  const{w,h}=sizes[key]||{w:100,h:60}; const{x:ox,y:oy}=posXY(oPos[key],W,H,w,h); return{ox,oy,w,h};
+  const{W,H}=resWH();
+  const fs=fontScale*(oScale[key]||1);
+  let w=100, h=60;
+
+  switch(key){
+
+    case 'speed': {
+      if(spdStyle==='gauge'){
+        // gauge: full circle
+        const R=Math.round(110*fs); const sz=R*2+Math.round(20*fs);
+        const stripH=opts.distov?Math.round(28*fs):0;
+        w=sz; h=sz+stripH;
+      } else if(spdStyle==='bar'){
+        // bar = arc gaugeR32
+        const gaugeR=Math.round(32*fs); const gcyPad=Math.round(8*fs); const topPad=Math.round(8*fs);
+        const panH=topPad+gaugeR*2+gcyPad;
+        const panW=Math.round(gaugeR*2+108*fs);
+        const gap=Math.round((window._spdDistGap||4)*fs);
+        const odoDigH=Math.round(18*fs*odoScale);
+        const distRowH=opts.distov?Math.max(odoDigH+Math.round(10*fs),Math.round(28*fs)):0;
+        w=panW; h=panH+(opts.distov?gap+distRowH:0);
+      } else if(spdStyle==='hud'){
+        // hud: arc gaugeR28
+        const gaugeR=Math.round(28*fs); const gcyPadH=Math.round(5*fs);
+        const panH=Math.round(gaugeR*2+12*fs+gcyPadH);
+        const panW=Math.round(gaugeR*2+90*fs);
+        const odoHH=distOdoMode?Math.round(16*fs*odoScale)+Math.round(8*fs):0;
+        const distH=opts.distov?(distOdoMode?Math.max(Math.round(22*fs),odoHH):Math.round(22*fs)):0;
+        w=panW; h=panH+distH;
+      } else if(spdStyle==='vbar'){
+        // vertical bar
+        const barW=Math.round(18*fs), barH=Math.round(140*fs);
+        const distH=opts.distov?Math.round(26*fs):0;
+        w=Math.round(barW+80*fs); h=barH+Math.round(16*fs)+distH;
+      } else if(spdStyle==='hbar'){
+        // horizontal bar
+        const barH=Math.round(12*fs), barW=Math.round(180*fs);
+        const distH=opts.distov?Math.round(26*fs):0;
+        w=barW+Math.round(16*fs); h=Math.round(barH+68*fs)+distH;
+      } else {
+        // fallback sama dengan bar
+        const gaugeR=Math.round(32*fs); const gcyPad=Math.round(8*fs); const topPad=Math.round(8*fs);
+        w=Math.round(gaugeR*2+108*fs); h=topPad+gaugeR*2+gcyPad;
+      }
+      break;
+    }
+
+    case 'map': {
+      const mS=Math.round(osmMapPxSize()*fs);
+      w=mS; h=mS;
+      break;
+    }
+
+    case 'info': {
+      w=Math.round(210*fs); h=Math.round(118*fs);
+      break;
+    }
+
+    case 'arc': {
+      w=Math.round(108*fs); h=Math.round(108*fs);
+      break;
+    }
+
+    case 'gpstime': {
+      // Mirror drawGpsTimeOverlay: lebar dari measureText + padding, tinggi tergantung gpsShowDate
+      const bigF=Math.round(30*fs);
+      const _mc=document.createElement('canvas').getContext('2d');
+      _mc.font=`bold ${bigF}px ${ovFont()}`;
+      // Estimasi teks waktu terpanjang: "23:59:59"
+      const tw=_mc.measureText('23:59:59').width;
+      w=Math.max(tw+Math.round(28*fs), Math.round(180*fs));
+      h=gpsShowDate ? Math.round(58*fs) : Math.round(42*fs);
+      break;
+    }
+
+    case 'coords': {
+      const lineF=Math.round(15*fs); const lineGap=Math.round(4*fs);
+      const pad=Math.round(12*fs); const iconW=coordShowIcon?Math.round(26*fs):0;
+      const charW=lineF*0.62;
+      const estTextW=coordFmt==='dms'?Math.round(charW*15):Math.round(charW*11);
+      w=iconW+estTextW+pad*2+(iconW>0?Math.round(6*fs):0);
+      h=lineF*2+lineGap+pad*2;
+      break;
+    }
+
+    case 'elev': {
+      w=Math.round(290*fs); h=Math.round(58*fs);
+      break;
+    }
+
+    case 'distov': {
+      w=Math.round(140*fs); h=Math.round(42*fs);
+      break;
+    }
+
+    case 'gforce': {
+      w=Math.round(130*fs); h=Math.round(130*fs);
+      break;
+    }
+
+    case 'compass': {
+      if(window._compassStyle==='bar'){
+        w=Math.round(200*fs); h=Math.round(44*fs);
+      } else {
+        const R=Math.round(52*fs); const sz2=R*2+Math.round(12*fs);
+        w=sz2; h=sz2;
+      }
+      break;
+    }
+
+    case 'grade': {
+      w=Math.round(140*fs); h=Math.round(52*fs);
+      break;
+    }
+
+
+    case 'odometer': {
+      const dW=Math.round(12*fs);
+      const scaledW=Math.round(dW*odoScale2);
+      const dH=Math.round(18*fs);
+      const scaledH=Math.round(dH*odoScale2);
+      const pad2=Math.round(2*fs);
+      const dotW=Math.round(scaledW*0.45);
+      const drumsTotalW=3*(scaledW+pad2)+(scaledW+pad2)+dotW+pad2;
+      const kmLblW=Math.round(28*fs); const distLblW=Math.round(30*fs);
+      w=distLblW+drumsTotalW+kmLblW+Math.round(12*fs);
+      h=scaledH+Math.round(14*fs);
+      break;
+    }
+
+    case 'heartrate': {
+      w=Math.round(160*fs); h=Math.round(56*fs);
+      break;
+    }
+
+    case 'cadence': {
+      w=Math.round(150*fs); h=Math.round(56*fs);
+      break;
+    }
+
+    case 'power': {
+      w=Math.round(160*fs); h=Math.round(56*fs);
+      break;
+    }
+
+    case 'watermark': {
+      if(customWatermarkImage){
+        // Mirror drawWatermarkOverlay: skala proporsional, tinggi maxH=60*fs
+        const img=customWatermarkImage;
+        const iw=img.naturalWidth, ih=img.naturalHeight;
+        if(iw&&ih){
+          const maxH=Math.round(60*fs);
+          w=Math.round(iw*(maxH/ih));
+          h=maxH;
+        } else { w=Math.round(120*fs); h=Math.round(60*fs); }
+      } else {
+        // Mirror teks "GPXGreenscreen" dengan font Syne 800
+        const _mc=document.createElement('canvas').getContext('2d');
+        _mc.font=`800 ${Math.round(24*fs)}px 'Syne', sans-serif`;
+        if('letterSpacing' in _mc) _mc.letterSpacing=`-${Math.round(0.8*fs)}px`;
+        w=Math.ceil(_mc.measureText('GPXGreenscreen').width)+Math.round(4*fs);
+        h=Math.round(26*fs);
+      }
+      break;
+    }
+
+    default:
+      w=100; h=60;
+  }
+
+  const{x:ox,y:oy}=posXY(oPos[key],W,H,w,h);
+  return{ox,oy,w,h};
 }
 
 function initDragPos(){
   const cw=document.getElementById('canvasWrapper'); const overlay=document.createElement('div'); overlay.id='dragOverlay'; overlay.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:10'; cw.style.position='relative'; cw.appendChild(overlay);
-  let activeKey=null, mode=null, startX=0, startY=0, origPos=null, origScale=1; const HANDLE=10;
+  let activeKey=null, mode=null, startX=0, startY=0, origPos=null, origScale=1, _dragRafPending=false; const HANDLE=10;
   function canvasXY(e){ const r=canvas.getBoundingClientRect(); const{W,H}=resWH(); const scaleX=W/r.width, scaleY=H/r.height; const src=e.touches?e.touches[0]:e; return{x:(src.clientX-r.left)*scaleX, y:(src.clientY-r.top)*scaleY, px:src.clientX-r.left, py:src.clientY-r.top, cssW:r.width, cssH:r.height}; }
   function toCss(cx,cy,cssW,cssH){ const{W,H}=resWH(); return{px:cx/W*cssW, py:cy/H*cssH}; }
   function updateHandles(){
-    overlay.innerHTML=''; if(!activeKey||!opts[activeKey])return;
-    const{ox,oy,w,h}=getOverlayBounds(activeKey); const r=canvas.getBoundingClientRect(); const cssW=r.width, cssH=r.height; const{W,H}=resWH(); const x=ox/W*cssW, y=oy/H*cssH; const bw=w/W*cssW, bh=h/H*cssH; const hh=HANDLE;
-    const box=document.createElement('div'); box.style.cssText=`position:absolute;left:${x}px;top:${y}px;width:${bw}px;height:${bh}px;border:1.5px dashed rgba(74,240,160,0.8);box-sizing:border-box;pointer-events:auto;cursor:grab`; box.dataset.mode='move'; overlay.appendChild(box);
-    const corners=[ {mode:'resize-nw',left:x-hh/2,top:y-hh/2}, {mode:'resize-ne',left:x+bw-hh/2,top:y-hh/2}, {mode:'resize-sw',left:x-hh/2,top:y+bh-hh/2}, {mode:'resize-se',left:x+bw-hh/2,top:y+bh-hh/2} ];
-    corners.forEach(({mode:m,left,top})=>{ const h=document.createElement('div'); h.style.cssText=`position:absolute;left:${left}px;top:${top}px;width:${hh}px;height:${hh}px;background:#4af0a0;border:1.5px solid #fff;border-radius:2px;pointer-events:auto;cursor:${m==='resize-se'||m==='resize-nw'?'nwse-resize':'nesw-resize'};box-shadow:0 0 4px rgba(0,0,0,0.5)`; h.dataset.mode=m; overlay.appendChild(h); });
+    overlay.innerHTML='';
+    if(!activeKey) return;
+    // watermark pakai opts.watermark, overlay lain pakai opts[key]
+    if(!opts[activeKey]) return;
+    const{ox,oy,w,h}=getOverlayBounds(activeKey);
+    const r=canvas.getBoundingClientRect();
+    const cssW=r.width, cssH=r.height;
+    const{W,H}=resWH();
+    const x=ox/W*cssW, y=oy/H*cssH;
+    const bw=w/W*cssW, bh=h/H*cssH;
+    const hh=HANDLE;
+    const box=document.createElement('div');
+    box.style.cssText=`position:absolute;left:${x}px;top:${y}px;width:${bw}px;height:${bh}px;border:1.5px dashed rgba(74,240,160,0.8);box-sizing:border-box;pointer-events:auto;cursor:grab`;
+    box.dataset.mode='move';
+    overlay.appendChild(box);
+    const corners=[
+      {mode:'resize-nw',left:x-hh/2,top:y-hh/2},
+      {mode:'resize-ne',left:x+bw-hh/2,top:y-hh/2},
+      {mode:'resize-sw',left:x-hh/2,top:y+bh-hh/2},
+      {mode:'resize-se',left:x+bw-hh/2,top:y+bh-hh/2}
+    ];
+    corners.forEach(({mode:m,left,top})=>{
+      const hEl=document.createElement('div');
+      hEl.style.cssText=`position:absolute;left:${left}px;top:${top}px;width:${hh}px;height:${hh}px;background:#4af0a0;border:1.5px solid #fff;border-radius:2px;pointer-events:auto;cursor:${m==='resize-se'||m==='resize-nw'?'nwse-resize':'nesw-resize'};box-shadow:0 0 4px rgba(0,0,0,0.5)`;
+      hEl.dataset.mode=m;
+      overlay.appendChild(hEl);
+    });
   }
-  function hitTest(cx,cy){ if(!gpxData)return null; const hits=[]; for(const key of Object.keys(oScale).concat(Object.keys(oPos))){ if(!opts[key])continue; const{ox,oy,w,h}=getOverlayBounds(key); if(cx>=ox&&cx<=ox+w&&cy>=oy&&cy<=oy+h) hits.push(key); } return[...new Set(hits)].pop()||null; }
+  function hitTest(cx,cy){
+    if(!gpxData) return null;
+    // Semua overlay yang valid — termasuk watermark yang tidak ada di opts
+    const ALL_KEYS = ['speed','map','info','arc','elev','gpstime','coords','gforce',
+                      'compass','grade','odometer','heartrate','cadence','power','watermark'];
+    const hits = [];
+    for(const key of ALL_KEYS){
+      // watermark selalu aktif jika opts.watermark, overlay lain cek opts[key]
+      if(!opts[key]) continue;
+      const{ox,oy,w,h}=getOverlayBounds(key);
+      if(cx>=ox && cx<=ox+w && cy>=oy && cy<=oy+h) hits.push(key);
+    }
+    return hits.pop()||null;
+  }
   canvas.style.pointerEvents='auto';
   cw.addEventListener('mousedown',e=>{
     if(isRendering)return; if(e.target!==canvas)return; const{x,y}=canvasXY(e); const key=hitTest(x,y); activeKey=key;
@@ -33,10 +237,28 @@ function initDragPos(){
     const{x,y,px,py}=canvasXY(e); startX=x; startY=y; origScale=oScale[activeKey]||1; const{ox,oy}=getOverlayBounds(activeKey); origPos=typeof oPos[activeKey]==='object'?{...oPos[activeKey]}:{x:ox,y:oy};
   });
   document.addEventListener('mousemove',e=>{
-    if(!mode||!activeKey)return; e.preventDefault(); const{x,y}=canvasXY(e); const dx=x-startX, dy=y-startY;
-    if(mode==='move'){ oPos[activeKey]={x:origPos.x+dx, y:origPos.y+dy}; } 
-    else { const{w:origW,h:origH}=getOverlayBounds(activeKey); let delta=0; if(mode==='resize-se') delta=(dx+dy)/2; else if(mode==='resize-sw') delta=(-dx+dy)/2; else if(mode==='resize-ne') delta=(dx-dy)/2; else if(mode==='resize-nw') delta=(-dx-dy)/2; const{W}=resWH(); const newScale=Math.max(0.1, origScale+(delta/W)*3); oScale[activeKey]=newScale; }
-    drawFrame(curFrame); updateHandles();
+    if(!mode||!activeKey)return;
+    e.preventDefault();
+    const{x,y}=canvasXY(e);
+    const dx=x-startX, dy=y-startY;
+    if(mode==='move'){
+      oPos[activeKey]={x:origPos.x+dx, y:origPos.y+dy};
+    } else {
+      let delta=0;
+      if(mode==='resize-se') delta=(dx+dy)/2;
+      else if(mode==='resize-sw') delta=(-dx+dy)/2;
+      else if(mode==='resize-ne') delta=(dx-dy)/2;
+      else if(mode==='resize-nw') delta=(-dx-dy)/2;
+      const{W}=resWH();
+      oScale[activeKey]=Math.max(0.1, origScale+(delta/W)*3);
+    }
+    // Update handle langsung (tidak tunggu drawFrame)
+    updateHandles();
+    // Draw canvas via rAF agar tidak block handle update
+    if(!_dragRafPending){
+      _dragRafPending=true;
+      requestAnimationFrame(()=>{ _dragRafPending=false; drawFrame(curFrame); });
+    }
   });
   function endDrag(){ if(mode){ mode=null; updateHandles(); } } document.addEventListener('mouseup',endDrag);
   cw.addEventListener('mousedown',e=>{ if(e.target===canvas){ const{x,y}=canvasXY(e); if(!hitTest(x,y)){ activeKey=null; updateHandles(); } } },true);

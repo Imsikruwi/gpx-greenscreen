@@ -3,55 +3,65 @@
 // ═══════════════════════════════════════════════════════════
 
 function drawPreviewBgImage(ctx, img, fit, W, H){
-  const iw = img.naturalWidth, ih = img.naturalHeight;
-  if(!iw || !ih) return;
-  const scaleX = W / iw, scaleY = H / ih;
-  let sx=0, sy=0, sw=iw, sh=ih, dx=0, dy=0, dw=W, dh=H;
+  const iw=img.naturalWidth, ih=img.naturalHeight;
+  if(!iw||!ih) return;
+  const scaleX=W/iw, scaleY=H/ih;
+  ctx.save();
+  switch(fit){
+    case 'fit': { const s=Math.min(scaleX,scaleY); const dw=iw*s,dh=ih*s; ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); ctx.drawImage(img,0,0,iw,ih,(W-dw)/2,(H-dh)/2,dw,dh); break; }
+    case 'fill': { const s=Math.max(scaleX,scaleY); const dw=iw*s,dh=ih*s; ctx.drawImage(img,0,0,iw,ih,(W-dw)/2,(H-dh)/2,dw,dh); break; }
+    case 'stretch': ctx.drawImage(img,0,0,iw,ih,0,0,W,H); break;
+    case 'center': ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); ctx.drawImage(img,(W-iw)/2,(H-ih)/2); break;
+    case 'span': { const s=Math.max(scaleX,scaleY); ctx.drawImage(img,0,0,iw,ih,0,0,iw*s,ih*s); break; }
+    default: ctx.drawImage(img,0,0,iw,ih,0,0,W,H);
+  }
+  ctx.restore();
+}
 
+// ═══════════════════════════════════════════════════════════
+// PREVIEW BACKGROUND IMAGE RENDERER
+// ═══════════════════════════════════════════════════════════
+
+function drawPreviewBgImage(ctx, img, fit, W, H){
+  const iw=img.naturalWidth, ih=img.naturalHeight;
+  if(!iw||!ih) return;
+  const scaleX=W/iw, scaleY=H/ih;
+  ctx.save();
   switch(fit){
     case 'fit': {
-      // Gambar penuh masuk canvas, ada letterbox
-      const s = Math.min(scaleX, scaleY);
-      dw = iw*s; dh = ih*s;
-      dx = (W-dw)/2; dy = (H-dh)/2;
-      ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-      ctx.drawImage(img, 0,0,iw,ih, dx,dy,dw,dh);
+      const s=Math.min(scaleX,scaleY);
+      const dw=iw*s, dh=ih*s;
+      ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+      ctx.drawImage(img,0,0,iw,ih,(W-dw)/2,(H-dh)/2,dw,dh);
       break;
     }
     case 'fill': {
-      // Gambar memenuhi canvas, dipotong sisi-sisi
-      const s = Math.max(scaleX, scaleY);
-      dw = iw*s; dh = ih*s;
-      dx = (W-dw)/2; dy = (H-dh)/2;
-      ctx.drawImage(img, 0,0,iw,ih, dx,dy,dw,dh);
+      const s=Math.max(scaleX,scaleY);
+      const dw=iw*s, dh=ih*s;
+      ctx.drawImage(img,0,0,iw,ih,(W-dw)/2,(H-dh)/2,dw,dh);
       break;
     }
-    case 'stretch': {
-      // Gambar diregangkan penuh
-      ctx.drawImage(img, 0,0,iw,ih, 0,0,W,H);
+    case 'stretch':
+      ctx.drawImage(img,0,0,iw,ih,0,0,W,H);
       break;
-    }
-    case 'center': {
-      // Gambar di tengah tanpa scaling
-      dx = (W-iw)/2; dy = (H-ih)/2;
-      ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-      ctx.drawImage(img, dx,dy);
+    case 'center':
+      ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+      ctx.drawImage(img,(W-iw)/2,(H-ih)/2);
       break;
-    }
     case 'span': {
-      // Alias fill tapi crop dari atas-kiri (tidak center)
-      const s = Math.max(scaleX, scaleY);
-      dw = iw*s; dh = ih*s;
-      ctx.drawImage(img, 0,0,iw,ih, 0,0,dw,dh);
+      const s=Math.max(scaleX,scaleY);
+      ctx.drawImage(img,0,0,iw,ih,0,0,iw*s,ih*s);
       break;
     }
     default:
-      ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-      ctx.drawImage(img, 0,0,iw,ih, 0,0,W,H);
+      ctx.drawImage(img,0,0,iw,ih,0,0,W,H);
   }
+  ctx.restore();
 }
 
-
+// ═══════════════════════════════════════════════════════════
+// MAIN DRAWING ENGINE
+// ═══════════════════════════════════════════════════════════
 
 function drawFrame(fi){ 
   if(!gpxData) return; 
@@ -74,11 +84,12 @@ function drawFrameWithPt(n, pt){
   const tfLen = tfE0 - tfS0 || 1; 
   const prog = (n - tfS0) / tfLen;
 
-  // Clear Canvas Background
+  // Clear canvas
   ctx.clearRect(0,0,W,H);
 
-  // Cek apakah bg image aktif untuk frame ini (preview atau export)
-  const _useBgImg = previewBgImage && previewBgEnabled && (previewBgIncludeExport || !isRendering);
+  // Background: image atau solid color
+  const _useBgImg = previewBgImage && previewBgEnabled &&
+                    (previewBgIncludeExport || !isRendering);
   if(_useBgImg){
     drawPreviewBgImage(ctx, previewBgImage, previewBgFit, W, H);
   } else {
@@ -97,7 +108,6 @@ function drawFrameWithPt(n, pt){
   if(opts.gforce)    drawGForceOverlay(ctx, pt, W, H);
   if(opts.compass)   drawCompassOverlay(ctx, pt, W, H);
   if(opts.grade)     drawGradeOverlay(ctx, pt, W, H);
-  if(opts.roadname)  drawRoadnameOverlay(ctx, pt, W, H);
   if(opts.odometer)  drawOdometerOverlay(ctx, pt, W, H);
   if(opts.heartrate) drawHeartrateOverlay(ctx, pt, W, H);
   if(opts.cadence)   drawCadenceOverlay(ctx, pt, W, H);

@@ -200,6 +200,7 @@
       <button class="chip on" onclick="setFPS(1,this)">1</button>
       <button class="chip" onclick="setFPS(2,this)">2</button>
       <button class="chip" onclick="setFPS(5,this)">5</button>
+      <button class="chip" onclick="setFPS(10,this)">10</button>
       <button class="chip" onclick="setFPS(20,this)">20</button>
     </div>
     ...
@@ -344,6 +345,43 @@
       </div>
     </div>
   </div>
+
+  <!-- ── BACKGROUND IMAGE ── -->
+  <div id="previewBgSection" style="display:none;width:100%;max-width:800px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:10px 14px;flex-direction:column;gap:8px">
+
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">🖼 Background Image</span>
+      <div class="tr" onclick="togglePreviewBgEnabled(this)" style="border:none;padding:0;background:none;width:auto;cursor:pointer">
+        <div class="tt" id="tog-preview-bg-enabled"><div class="th"></div></div>
+      </div>
+    </div>
+
+    <label id="previewBgUploadBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 10px;border-radius:var(--r);border:1px dashed var(--border2);cursor:pointer;font-size:11px;font-family:var(--fm);color:var(--text2);background:var(--bg);box-sizing:border-box;width:100%;transition:border-color .15s,color .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">
+      <input type="file" accept="image/*" id="previewBgInput" onchange="loadPreviewBgImage(this)" style="display:none">
+      📷 Upload Image
+    </label>
+
+    <div id="previewBgLoaded" style="display:none;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;gap:6px">
+        <span id="previewBgName" style="font-size:10px;color:var(--accent);font-family:var(--fm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">—</span>
+        <button onclick="clearPreviewBg()" style="font-size:10px;color:var(--danger);background:none;border:none;cursor:pointer;font-family:var(--fm);padding:0;flex-shrink:0;line-height:1">✕ Remove</button>
+      </div>
+      <div class="sub-lbl" style="margin-top:2px">Fit Mode</div>
+      <div class="chips" id="previewBgFitChips">
+        <button class="chip on" onclick="setPreviewBgFit('fit',this)">Fit</button>
+        <button class="chip"    onclick="setPreviewBgFit('fill',this)">Fill</button>
+        <button class="chip"    onclick="setPreviewBgFit('stretch',this)">Stretch</button>
+        <button class="chip"    onclick="setPreviewBgFit('center',this)">Center</button>
+        <button class="chip"    onclick="setPreviewBgFit('span',this)">Span</button>
+      </div>
+      <div class="tr" onclick="togglePreviewBgExport(this)" style="margin-top:2px">
+        <span class="tl" style="font-size:11px">Include in Export</span>
+        <div class="tt" id="tog-preview-bg-export"><div class="th"></div></div>
+      </div>
+    </div>
+
+  </div>
+
 </div><div class="panel" id="rightPanel" style="display:none">
   <div style="display:flex;gap:6px;margin-bottom:2px">
     <button class="bs" style="flex:1;font-size:11px;padding:6px 4px" onclick="resetDefaults()">↺ Reset Default</button>
@@ -409,10 +447,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-speed">
           <div class="chip" onclick="setPos('speed','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('speed',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-speed"><div class="th"></div></div></div><div class="chip" onclick="setPos('speed','tc',this)">↑</div><div class="chip" onclick="setPos('speed','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('speed','tc',this)">↑</div><div class="chip" onclick="setPos('speed','tr',this)">↗</div>
           <div class="chip" onclick="setPos('speed','ml',this)">←</div><div class="chip" onclick="setPos('speed','mc',this)">·</div><div class="chip" onclick="setPos('speed','mr',this)">→</div>
           <div class="chip on" onclick="setPos('speed','bl',this)">↙</div><div class="chip" onclick="setPos('speed','bc',this)">↓</div><div class="chip" onclick="setPos('speed','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('speed',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-speed"><div class="th"></div></div></div>
         <div class="sub-lbl">Speed Unit</div>
         <div class="chips">
           <button class="chip on" id="unit-kmh" onclick="setUnit('kmh',this)">km/h</button>
@@ -486,10 +525,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-odometer">
           <div class="chip" onclick="setPos('odometer','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('odometer',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-odometer"><div class="th"></div></div></div><div class="chip" onclick="setPos('odometer','tc',this)">↑</div><div class="chip" onclick="setPos('odometer','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('odometer','tc',this)">↑</div><div class="chip" onclick="setPos('odometer','tr',this)">↗</div>
           <div class="chip" onclick="setPos('odometer','ml',this)">←</div><div class="chip" onclick="setPos('odometer','mc',this)">·</div><div class="chip" onclick="setPos('odometer','mr',this)">→</div>
           <div class="chip" onclick="setPos('odometer','bl',this)">↙</div><div class="chip on" onclick="setPos('odometer','bc',this)">↓</div><div class="chip" onclick="setPos('odometer','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('odometer',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-odometer"><div class="th"></div></div></div>
         <div class="sr" style="margin-top:2px">
           <div class="sm"><span class="sl">Size</span><span class="sv" id="odoScaleVal2">1.0×</span></div>
           <input type="range" id="odo-scale-slider2" min="50" max="250" value="100" step="5"
@@ -513,10 +553,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-map">
           <div class="chip" onclick="setPos('map','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('map',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-map"><div class="th"></div></div></div><div class="chip" onclick="setPos('map','tc',this)">↑</div><div class="chip on" onclick="setPos('map','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('map','tc',this)">↑</div><div class="chip on" onclick="setPos('map','tr',this)">↗</div>
           <div class="chip" onclick="setPos('map','ml',this)">←</div><div class="chip" onclick="setPos('map','mc',this)">·</div><div class="chip" onclick="setPos('map','mr',this)">→</div>
           <div class="chip" onclick="setPos('map','bl',this)">↙</div><div class="chip" onclick="setPos('map','bc',this)">↓</div><div class="chip" onclick="setPos('map','br',this)">↘</div>
         </div>        <div class="sub-lbl" style="margin-top:4px">Shape</div>
+        <div class="tr" onclick="toggleOverlayBg('map',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-map"><div class="th"></div></div></div>
         <div class="chips" id="map-shape-chips">
           <button class="chip" onclick="setMapShape('circle',this)">⬤ Circle</button>
           <button class="chip" onclick="setMapShape('square',this)">■ Square</button>
@@ -576,10 +617,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-gpstime">
           <div class="chip on" onclick="setPos('gpstime','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('gpstime',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-gpstime"><div class="th"></div></div></div><div class="chip" onclick="setPos('gpstime','tc',this)">↑</div><div class="chip" onclick="setPos('gpstime','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('gpstime','tc',this)">↑</div><div class="chip" onclick="setPos('gpstime','tr',this)">↗</div>
           <div class="chip" onclick="setPos('gpstime','ml',this)">←</div><div class="chip" onclick="setPos('gpstime','mc',this)">·</div><div class="chip" onclick="setPos('gpstime','mr',this)">→</div>
           <div class="chip" onclick="setPos('gpstime','bl',this)">↙</div><div class="chip" onclick="setPos('gpstime','bc',this)">↓</div><div class="chip" onclick="setPos('gpstime','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('gpstime',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-gpstime"><div class="th"></div></div></div>
         <div class="sub-lbl">Format</div>
         <div class="chips">
           <button class="chip on" onclick="setGpsFmt('hms',this)">HH:MM:SS</button>
@@ -604,10 +646,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-coords">
           <div class="chip" onclick="setPos('coords','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('coords',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-coords"><div class="th"></div></div></div><div class="chip" onclick="setPos('coords','tc',this)">↑</div><div class="chip" onclick="setPos('coords','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('coords','tc',this)">↑</div><div class="chip" onclick="setPos('coords','tr',this)">↗</div>
           <div class="chip" onclick="setPos('coords','ml',this)">←</div><div class="chip" onclick="setPos('coords','mc',this)">·</div><div class="chip" onclick="setPos('coords','mr',this)">→</div>
           <div class="chip" onclick="setPos('coords','bl',this)">↙</div><div class="chip" onclick="setPos('coords','bc',this)">↓</div><div class="chip on" onclick="setPos('coords','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('coords',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-coords"><div class="th"></div></div></div>
         <div class="sub-lbl">Format</div>
         <div class="chips">
           <button class="chip on" onclick="setCoordFmt('dms',this)">DMS</button>
@@ -631,10 +674,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-info">
           <div class="chip" onclick="setPos('info','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('info',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-info"><div class="th"></div></div></div><div class="chip" onclick="setPos('info','tc',this)">↑</div><div class="chip" onclick="setPos('info','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('info','tc',this)">↑</div><div class="chip" onclick="setPos('info','tr',this)">↗</div>
           <div class="chip" onclick="setPos('info','ml',this)">←</div><div class="chip" onclick="setPos('info','mc',this)">·</div><div class="chip" onclick="setPos('info','mr',this)">→</div>
           <div class="chip" onclick="setPos('info','bl',this)">↙</div><div class="chip" onclick="setPos('info','bc',this)">↓</div><div class="chip on" onclick="setPos('info','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('info',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-info"><div class="th"></div></div></div>
       </div>
     </div>
 
@@ -649,10 +693,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-arc">
           <div class="chip on" onclick="setPos('arc','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('arc',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-arc"><div class="th"></div></div></div><div class="chip" onclick="setPos('arc','tc',this)">↑</div><div class="chip" onclick="setPos('arc','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('arc','tc',this)">↑</div><div class="chip" onclick="setPos('arc','tr',this)">↗</div>
           <div class="chip" onclick="setPos('arc','ml',this)">←</div><div class="chip" onclick="setPos('arc','mc',this)">·</div><div class="chip" onclick="setPos('arc','mr',this)">→</div>
           <div class="chip" onclick="setPos('arc','bl',this)">↙</div><div class="chip" onclick="setPos('arc','bc',this)">↓</div><div class="chip" onclick="setPos('arc','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('arc',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-arc"><div class="th"></div></div></div>
       </div>
     </div>
 
@@ -667,10 +712,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-elev">
           <div class="chip" onclick="setPos('elev','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('elev',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-elev"><div class="th"></div></div></div><div class="chip" onclick="setPos('elev','tc',this)">↑</div><div class="chip" onclick="setPos('elev','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('elev','tc',this)">↑</div><div class="chip" onclick="setPos('elev','tr',this)">↗</div>
           <div class="chip" onclick="setPos('elev','ml',this)">←</div><div class="chip" onclick="setPos('elev','mc',this)">·</div><div class="chip" onclick="setPos('elev','mr',this)">→</div>
           <div class="chip" onclick="setPos('elev','bl',this)">↙</div><div class="chip on" onclick="setPos('elev','bc',this)">↓</div><div class="chip" onclick="setPos('elev','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('elev',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-elev"><div class="th"></div></div></div>
       </div>
     </div>
 
@@ -698,10 +744,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-gforce">
           <div class="chip" onclick="setPos('gforce','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('gforce',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-gforce"><div class="th"></div></div></div><div class="chip" onclick="setPos('gforce','tc',this)">↑</div><div class="chip" onclick="setPos('gforce','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('gforce','tc',this)">↑</div><div class="chip" onclick="setPos('gforce','tr',this)">↗</div>
           <div class="chip on" onclick="setPos('gforce','ml',this)">←</div><div class="chip" onclick="setPos('gforce','mc',this)">·</div><div class="chip" onclick="setPos('gforce','mr',this)">→</div>
           <div class="chip" onclick="setPos('gforce','bl',this)">↙</div><div class="chip" onclick="setPos('gforce','bc',this)">↓</div><div class="chip" onclick="setPos('gforce','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('gforce',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-gforce"><div class="th"></div></div></div>
         <div class="sub-lbl">Scale</div>
         <div class="chips">
           <button class="chip on" onclick="setGforceScale(1,this)">1G</button>
@@ -722,11 +769,12 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-watermark">
           <div class="chip on" onclick="setPos('watermark','tl',this)">↖</div>
-          <div class="tr" onclick="toggleOverlayBg('watermark',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-watermark"><div class="th"></div></div></div>
+          
           <div class="chip" onclick="setPos('watermark','tc',this)">↑</div><div class="chip" onclick="setPos('watermark','tr',this)">↗</div>
           <div class="chip" onclick="setPos('watermark','ml',this)">←</div><div class="chip" onclick="setPos('watermark','mc',this)">·</div><div class="chip" onclick="setPos('watermark','mr',this)">→</div>
           <div class="chip" onclick="setPos('watermark','bl',this)">↙</div><div class="chip" onclick="setPos('watermark','bc',this)">↓</div><div class="chip" onclick="setPos('watermark','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('watermark',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-watermark"><div class="th"></div></div></div>
         <div style="font-size:10px;color:var(--text3);font-family:var(--fm);margin-top:4px">Show GPX-GreenScreen text</div>
       </div>
     </div>
@@ -742,10 +790,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-compass">
           <div class="chip" onclick="setPos('compass','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('compass',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-compass"><div class="th"></div></div></div><div class="chip" onclick="setPos('compass','tc',this)">↑</div><div class="chip on" onclick="setPos('compass','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('compass','tc',this)">↑</div><div class="chip on" onclick="setPos('compass','tr',this)">↗</div>
           <div class="chip" onclick="setPos('compass','ml',this)">←</div><div class="chip" onclick="setPos('compass','mc',this)">·</div><div class="chip" onclick="setPos('compass','mr',this)">→</div>
           <div class="chip" onclick="setPos('compass','bl',this)">↙</div><div class="chip" onclick="setPos('compass','bc',this)">↓</div><div class="chip" onclick="setPos('compass','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('compass',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-compass"><div class="th"></div></div></div>
         <div class="sub-lbl">Style</div>
         <div class="chips">
           <button class="chip on" onclick="setCompassStyle('rose',this)">Rose</button>
@@ -765,10 +814,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-grade">
           <div class="chip" onclick="setPos('grade','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('grade',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-grade"><div class="th"></div></div></div><div class="chip on" onclick="setPos('grade','tc',this)">↑</div><div class="chip" onclick="setPos('grade','tr',this)">↗</div>
+        <div class="chip on" onclick="setPos('grade','tc',this)">↑</div><div class="chip" onclick="setPos('grade','tr',this)">↗</div>
           <div class="chip" onclick="setPos('grade','ml',this)">←</div><div class="chip" onclick="setPos('grade','mc',this)">·</div><div class="chip" onclick="setPos('grade','mr',this)">→</div>
           <div class="chip" onclick="setPos('grade','bl',this)">↙</div><div class="chip" onclick="setPos('grade','bc',this)">↓</div><div class="chip" onclick="setPos('grade','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('grade',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-grade"><div class="th"></div></div></div>
       </div>
     </div>
 
@@ -783,10 +833,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-roadname">
           <div class="chip" onclick="setPos('roadname','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('roadname',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-roadname"><div class="th"></div></div></div><div class="chip" onclick="setPos('roadname','tc',this)">↑</div><div class="chip" onclick="setPos('roadname','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('roadname','tc',this)">↑</div><div class="chip" onclick="setPos('roadname','tr',this)">↗</div>
           <div class="chip" onclick="setPos('roadname','ml',this)">←</div><div class="chip" onclick="setPos('roadname','mc',this)">·</div><div class="chip" onclick="setPos('roadname','mr',this)">→</div>
           <div class="chip" onclick="setPos('roadname','bl',this)">↙</div><div class="chip on" onclick="setPos('roadname','bc',this)">↓</div><div class="chip" onclick="setPos('roadname','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('roadname',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-roadname"><div class="th"></div></div></div>
         <div style="font-size:10px;color:var(--text3);font-family:var(--fm);margin-top:4px;line-height:1.5">
           From OSM data when minimap is active
         </div>
@@ -805,10 +856,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-heartrate">
           <div class="chip" onclick="setPos('heartrate','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('heartrate',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-heartrate"><div class="th"></div></div></div><div class="chip" onclick="setPos('heartrate','tc',this)">↑</div><div class="chip" onclick="setPos('heartrate','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('heartrate','tc',this)">↑</div><div class="chip" onclick="setPos('heartrate','tr',this)">↗</div>
           <div class="chip" onclick="setPos('heartrate','ml',this)">←</div><div class="chip" onclick="setPos('heartrate','mc',this)">·</div><div class="chip" onclick="setPos('heartrate','mr',this)">→</div>
           <div class="chip on" onclick="setPos('heartrate','bl',this)">↙</div><div class="chip" onclick="setPos('heartrate','bc',this)">↓</div><div class="chip" onclick="setPos('heartrate','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('heartrate',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-heartrate"><div class="th"></div></div></div>
         <div class="sub-lbl" style="margin-top:4px">HR Zones (bpm)</div>
         <div class="sr">
           <div class="sm"><span class="sl">Max HR</span><span class="sv" id="hrMaxVal">190</span></div>
@@ -832,10 +884,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-cadence">
           <div class="chip" onclick="setPos('cadence','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('cadence',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-cadence"><div class="th"></div></div></div><div class="chip" onclick="setPos('cadence','tc',this)">↑</div><div class="chip" onclick="setPos('cadence','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('cadence','tc',this)">↑</div><div class="chip" onclick="setPos('cadence','tr',this)">↗</div>
           <div class="chip" onclick="setPos('cadence','ml',this)">←</div><div class="chip" onclick="setPos('cadence','mc',this)">·</div><div class="chip" onclick="setPos('cadence','mr',this)">→</div>
           <div class="chip" onclick="setPos('cadence','bl',this)">↙</div><div class="chip on" onclick="setPos('cadence','bc',this)">↓</div><div class="chip" onclick="setPos('cadence','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('cadence',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-cadence"><div class="th"></div></div></div>
       </div>
     </div>
 
@@ -850,10 +903,11 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-power">
           <div class="chip" onclick="setPos('power','tl',this)">↖</div>
-        <div class="tr" onclick="toggleOverlayBg('power',this)" style="margin-top:4px;border:none;padding:0;background:none"><span class="tl" style="font-size:10px">Background</span><div class="tt" id="tog-bg-power"><div class="th"></div></div></div><div class="chip" onclick="setPos('power','tc',this)">↑</div><div class="chip" onclick="setPos('power','tr',this)">↗</div>
+        <div class="chip" onclick="setPos('power','tc',this)">↑</div><div class="chip" onclick="setPos('power','tr',this)">↗</div>
           <div class="chip" onclick="setPos('power','ml',this)">←</div><div class="chip" onclick="setPos('power','mc',this)">·</div><div class="chip" onclick="setPos('power','mr',this)">→</div>
           <div class="chip" onclick="setPos('power','bl',this)">↙</div><div class="chip" onclick="setPos('power','bc',this)">↓</div><div class="chip on" onclick="setPos('power','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('power',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-power"><div class="th"></div></div></div>
         <div class="sub-lbl" style="margin-top:4px">FTP (Watts)</div>
         <div class="sr">
           <div class="sm"><span class="sl">FTP</span><span class="sv" id="ftpVal">200 W</span></div>

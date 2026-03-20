@@ -149,6 +149,9 @@ function parseGPX(xml,fname){
   document.getElementById('playbar').classList.add('vis');
   document.getElementById('vsb').classList.add('vis');
   document.getElementById('orientBar').classList.add('vis');
+  // Tampilkan section background image
+  const pbSec = document.getElementById('previewBgSection');
+  if(pbSec) pbSec.style.display = 'flex';
   const fsBtn=document.getElementById('btnFullscreen'); if(fsBtn)fsBtn.style.display='block';
   showMainApp();
   document.getElementById('fmtSection').style.display='flex';

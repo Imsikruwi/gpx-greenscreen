@@ -2,25 +2,34 @@
 // OVERLAY DRAWING MODULE
 // ═══════════════════════════════════════════════════════════
 
-// Helper untuk mengecek apakah background sedang menyala
+// Helper untuk mengecek apakah background sedang menyala.
+// Per-overlay toggle selalu override global — bukan fallback.
 function checkBg(key) {
-  return overlayBg[key] !== undefined ? overlayBg[key] : showOverlayBg;
+  if(overlayBg[key] !== undefined) return overlayBg[key];
+  return showOverlayBg;
 }
+
 
 // Base function to draw scrolling Odometer digits
 function drawOdometer(c, value, decimals, x, y, digitW, digitH, fs, textColor, bgAlpha, scale=1){
   digitW=Math.round(digitW*scale); digitH=Math.round(digitH*scale);
-  const ODO_DEC = 1, SCROLL_ZONE = 0.5, odoBase = Math.pow(10, ODO_DEC); const sv = value * odoBase;  
+  const ODO_DEC = 1, SCROLL_ZONE = 0.5, odoBase = Math.pow(10, ODO_DEC); const sv = value * odoBase;
   const stableInt = Math.max(0, Math.floor(value)); const intDigits = Math.max(1, String(stableInt).length); const totalDigits = intDigits + ODO_DEC;
   const cols = [];
-  for(let i=0; i<totalDigits; i++){ const posFromRight = totalDigits - 1 - i; const colVal = sv / Math.pow(10, posFromRight); cols.push({ posFromRight, digit: Math.floor(colVal) % 10, frac:  colVal % 1 }); }
+  for(let i=0; i<totalDigits; i++){ const posFromRight = totalDigits - 1 - i; const colVal = sv / Math.pow(10, posFromRight); cols.push({ posFromRight, digit: Math.floor(colVal) % 10, frac: colVal % 1 }); }
   const allChars = [];
   for(let i=0; i<totalDigits; i++){ allChars.push(String(cols[i].digit)); if(i === intDigits - 1 && ODO_DEC > 0) allChars.push('.'); }
-  const frac0   = cols[totalDigits-1].frac; const scroll0 = frac0 >= SCROLL_ZONE ? (frac0 - SCROLL_ZONE) / (1 - SCROLL_ZONE) : 0;
-  const pad = Math.round(2*fs); const r   = Math.round(3*fs); let cx = x; let digitIdx = 0;
+  const frac0 = cols[totalDigits-1].frac; const scroll0 = frac0 >= SCROLL_ZONE ? (frac0 - SCROLL_ZONE) / (1 - SCROLL_ZONE) : 0;
+  const pad = Math.round(2*fs); const r = Math.round(3*fs); let cx = x; let digitIdx = 0;
   for(let ci=0; ci<allChars.length; ci++){
     const ch = allChars[ci];
-    if(ch==='.'){ const dotW = Math.round(digitW*0.42); c.save(); c.fillStyle=textColor; c.globalAlpha=0.6; c.beginPath(); c.arc(cx+dotW/2, y+digitH-Math.round(2.5*fs), Math.round(1.5*fs), 0, Math.PI*2); c.fill(); c.globalAlpha=1; c.restore(); cx += dotW + pad; continue; }
+    if(ch==='.'){ 
+      const dotW = Math.round(digitW*0.42); 
+      c.save(); c.fillStyle=textColor; c.globalAlpha=0.6; 
+      c.beginPath(); c.arc(cx+dotW/2, y+digitH-Math.round(2.5*fs), Math.round(1.5*fs), 0, Math.PI*2); c.fill(); 
+      c.globalAlpha=1; c.restore(); 
+      cx += dotW + pad; continue; 
+    }
     const{posFromRight, digit} = cols[digitIdx];
     let scrollFrac = 0;
     if(posFromRight === 0){ scrollFrac = scroll0; } else { const allRightAre9 = cols.slice(digitIdx+1).every(col => col.digit === 9); scrollFrac = allRightAre9 ? scroll0 : 0; }
@@ -28,16 +37,28 @@ function drawOdometer(c, value, decimals, x, y, digitW, digitH, fs, textColor, b
     const ease = scrollFrac < 0.5 ? 2*scrollFrac*scrollFrac : 1 - Math.pow(-2*scrollFrac+2,2)/2;
     const isDecimalDigit = posFromRight < ODO_DEC;
     c.save();
-    if(isDecimalDigit){ c.fillStyle = 'rgba(255,255,255,0.95)'; } else { c.fillStyle = `rgba(0,0,0,${bgAlpha})`; }
+    // Desimal: background putih; Integer: background hitam solid (tanpa gradasi)
+    if(isDecimalDigit){ 
+      c.fillStyle = 'rgba(255,255,255,0.95)'; 
+    } else { 
+      c.fillStyle = 'rgba(0,0,0,0.92)'; 
+    }
     c.beginPath(); c.roundRect(cx, y, digitW, digitH, r); c.fill();
-    if(!isDecimalDigit){ const shad = c.createLinearGradient(cx,y,cx,y+digitH); shad.addColorStop(0, 'rgba(0,0,0,0.6)'); shad.addColorStop(0.2,'rgba(0,0,0,0)'); shad.addColorStop(0.8,'rgba(0,0,0,0)'); shad.addColorStop(1, 'rgba(0,0,0,0.6)'); c.fillStyle=shad; c.beginPath(); c.roundRect(cx,y,digitW,digitH,r); c.fill(); }
+    // Clip untuk scroll
     c.beginPath(); c.roundRect(cx, y, digitW, digitH, r); c.clip();
     c.font = `bold ${Math.round(digitH*0.68)}px 'IBM Plex Mono',monospace`; c.textAlign='center'; c.textBaseline='middle';
     const digitColor = isDecimalDigit ? '#000000' : textColor;
-    if(ease > 0.001){ const off = ease * digitH; c.fillStyle=digitColor; c.globalAlpha = Math.max(0, 1 - ease); c.fillText(String(digit), cx+digitW/2, y+digitH/2 - off); c.fillStyle=digitColor; c.globalAlpha = Math.min(1, ease); c.fillText(String(nextDig), cx+digitW/2, y+digitH/2 + digitH - off); } 
-    else { c.fillStyle=digitColor; c.globalAlpha=1; c.fillText(String(digit), cx+digitW/2, y+digitH/2); }
-    c.globalAlpha=1; c.strokeStyle='rgba(255,255,255,0.1)'; c.lineWidth=Math.round(fs*0.5);
-    c.beginPath(); c.moveTo(cx+2,y); c.lineTo(cx+digitW-2,y); c.stroke(); c.beginPath(); c.moveTo(cx+2,y+digitH); c.lineTo(cx+digitW-2,y+digitH); c.stroke();
+    if(ease > 0.001){ 
+      const off = ease * digitH; 
+      c.fillStyle=digitColor; c.globalAlpha = Math.max(0, 1 - ease); c.fillText(String(digit), cx+digitW/2, y+digitH/2 - off); 
+      c.fillStyle=digitColor; c.globalAlpha = Math.min(1, ease); c.fillText(String(nextDig), cx+digitW/2, y+digitH/2 + digitH - off); 
+    } else { 
+      c.fillStyle=digitColor; c.globalAlpha=1; c.fillText(String(digit), cx+digitW/2, y+digitH/2); 
+    }
+    // Garis tipis atas-bawah sebagai divider
+    c.globalAlpha=1; c.strokeStyle='rgba(255,255,255,0.15)'; c.lineWidth=Math.round(fs*0.5);
+    c.beginPath(); c.moveTo(cx+2,y); c.lineTo(cx+digitW-2,y); c.stroke(); 
+    c.beginPath(); c.moveTo(cx+2,y+digitH); c.lineTo(cx+digitW-2,y+digitH); c.stroke();
     c.restore(); cx += digitW + pad; digitIdx++;
   }
   return cx - x;
@@ -452,18 +473,43 @@ function drawRoadnameOverlay(ctx, pt, W, H) {
 }
 
 function drawOdometerOverlay(ctx, pt, W, H) {
-  const fs=ovFS('odometer'); const bgOn = checkBg('odometer'); const distKmO=((pt.cumDist-gpxData.points[tfS0].cumDist)/1000); const intPart=Math.floor(distKmO); const paddedStr=String(intPart).padStart(3,'0')+'.'+Math.floor((distKmO*10)%10); 
-  const dW=Math.round(12*fs), dH=Math.round(18*fs); const scaledW=Math.round(dW*odoScale2), scaledH=Math.round(dH*odoScale2); const dotW=Math.round(scaledW*0.45); const pad2=Math.round(2*fs); 
-  const drumsTotalW = 4*(scaledW+pad2) + dotW + pad2; const kmLblW=Math.round(28*fs); const distLblW=Math.round(30*fs); const panW=distLblW + drumsTotalW + kmLblW + Math.round(12*fs); const panH=scaledH+Math.round(14*fs); 
+  const fs=ovFS('odometer'); const bgOn = checkBg('odometer'); 
+  const distKmO=((pt.cumDist-gpxData.points[tfS0].cumDist)/1000); 
+  const intPart=Math.floor(distKmO); 
+  const dW=Math.round(12*fs), dH=Math.round(18*fs); 
+  const scaledW=Math.round(dW*odoScale2), scaledH=Math.round(dH*odoScale2); 
+  const dotW=Math.round(scaledW*0.45); const pad2=Math.round(2*fs); 
+  // Selalu 3 digit integer + 1 desimal = 4 kolom + 1 titik
+  const totalIntDigits = 3;
+  const drumsTotalW = totalIntDigits*(scaledW+pad2) + 1*(scaledW+pad2) + dotW + pad2; 
+  const kmLblW=Math.round(28*fs); const distLblW=Math.round(30*fs); 
+  const panW=distLblW + drumsTotalW + kmLblW + Math.round(12*fs); 
+  const panH=scaledH+Math.round(14*fs); 
   const{x:ox,y:oy}=posXY(oPos.odometer,W,H,panW,panH); 
   ctx.save(); 
   if(odoShowBorder && bgOn){ 
-      ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath();ctx.roundRect(ox,oy,panW,panH,Math.round(5*fs));ctx.fill(); 
-      ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=Math.round(fs*0.6); ctx.beginPath();ctx.roundRect(ox,oy,panW,panH,Math.round(5*fs));ctx.stroke(); 
+    ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath();ctx.roundRect(ox,oy,panW,panH,Math.round(5*fs));ctx.fill(); 
+    ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=Math.round(fs*0.6); ctx.beginPath();ctx.roundRect(ox,oy,panW,panH,Math.round(5*fs));ctx.stroke(); 
   } 
   const lfs=Math.round(8*fs); ctx.font=`bold ${lfs}px 'IBM Plex Mono',monospace`; ctx.fillStyle=textColor;ctx.globalAlpha=0.55;ctx.textAlign='left';ctx.textBaseline='middle'; ctx.fillText('ODO',ox+Math.round(6*fs),oy+panH/2);ctx.globalAlpha=1; 
-  const odoXO=ox+distLblW, odoYO=oy+(panH-scaledH)/2; let cx2=odoXO; const r2=Math.round(3*fs); const nIntDigits=String(intPart).length; const leadZeros=3-nIntDigits; 
-  for(let z=0;z<leadZeros;z++){ ctx.save(); ctx.fillStyle=`rgba(0,0,0,${panelOp+0.3})`; ctx.beginPath();ctx.roundRect(cx2,odoYO,scaledW,scaledH,r2);ctx.fill(); const shad=ctx.createLinearGradient(cx2,odoYO,cx2,odoYO+scaledH); shad.addColorStop(0,'rgba(0,0,0,0.6)');shad.addColorStop(0.2,'rgba(0,0,0,0)'); shad.addColorStop(0.8,'rgba(0,0,0,0)');shad.addColorStop(1,'rgba(0,0,0,0.6)'); ctx.fillStyle=shad;ctx.beginPath();ctx.roundRect(cx2,odoYO,scaledW,scaledH,r2);ctx.fill(); ctx.beginPath();ctx.roundRect(cx2,odoYO,scaledW,scaledH,r2);ctx.clip(); ctx.font=`bold ${Math.round(scaledH*0.68)}px 'IBM Plex Mono',monospace`; ctx.fillStyle=`rgba(255,255,255,0.25)`;ctx.textAlign='center';ctx.textBaseline='middle'; ctx.fillText('0',cx2+scaledW/2,odoYO+scaledH/2); ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath();ctx.moveTo(cx2+2,odoYO);ctx.lineTo(cx2+scaledW-2,odoYO);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx2+2,odoYO+scaledH);ctx.lineTo(cx2+scaledW-2,odoYO+scaledH);ctx.stroke(); ctx.restore(); cx2+=scaledW+pad2; } 
+  const odoXO=ox+distLblW, odoYO=oy+(panH-scaledH)/2; let cx2=odoXO; const r2=Math.round(3*fs); 
+  // Hitung berapa leading zeros yang perlu digambar (selalu total 3 digit integer)
+  const nIntDigits=Math.max(1, String(intPart).length); 
+  const leadZeros=Math.max(0, totalIntDigits - nIntDigits); 
+  for(let z=0;z<leadZeros;z++){ 
+    ctx.save(); 
+    // Hitam solid — tanpa gradasi
+    ctx.fillStyle='rgba(0,0,0,0.92)'; 
+    ctx.beginPath();ctx.roundRect(cx2,odoYO,scaledW,scaledH,r2);ctx.fill(); 
+    ctx.beginPath();ctx.roundRect(cx2,odoYO,scaledW,scaledH,r2);ctx.clip(); 
+    ctx.font=`bold ${Math.round(scaledH*0.68)}px 'IBM Plex Mono',monospace`; 
+    ctx.fillStyle=`rgba(255,255,255,0.25)`;ctx.textAlign='center';ctx.textBaseline='middle'; 
+    ctx.fillText('0',cx2+scaledW/2,odoYO+scaledH/2); 
+    ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=Math.round(fs*0.5); 
+    ctx.beginPath();ctx.moveTo(cx2+2,odoYO);ctx.lineTo(cx2+scaledW-2,odoYO);ctx.stroke(); 
+    ctx.beginPath();ctx.moveTo(cx2+2,odoYO+scaledH);ctx.lineTo(cx2+scaledW-2,odoYO+scaledH);ctx.stroke(); 
+    ctx.restore(); cx2+=scaledW+pad2; 
+  } 
   const usedW=drawOdometer(ctx,distKmO,1,cx2,odoYO,dW,dH,fs,textColor,panelOp+0.3,odoScale2); 
   ctx.font=`bold ${Math.round(11*fs)}px 'IBM Plex Mono',monospace`; ctx.fillStyle=textColor;ctx.globalAlpha=0.8;ctx.textAlign='left';ctx.textBaseline='middle'; ctx.fillText('km',cx2+usedW+Math.round(5*fs),oy+panH/2);ctx.globalAlpha=1; 
   ctx.restore();

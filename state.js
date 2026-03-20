@@ -17,6 +17,12 @@ let showOverlayBg=false, overlayBg={};
 window._spdDistGap=4;  
 let hrMaxBpm=190, ftpWatts=200;
 
+// ── PREVIEW BACKGROUND IMAGE ──
+let previewBgImage=null;        // HTMLImageElement | null
+let previewBgEnabled=false;     // toggle on/off
+let previewBgFit='fit';         // 'fit' | 'fill' | 'stretch' | 'center' | 'span'
+let previewBgIncludeExport=false;
+
 let osmZoom=15, osmMapShape='none', osmMapSize='md', osmShowRoute=true, osmShowHeading=false, osmUseOSM=false;
 let mapBgStyle='trans', mapRouteColor='#ffffff', mapDotColor='#ff3333', mapGhostColor='rgba(255,255,255,0.18)', mapShowNorth=false;
 let osmStyle='standard', osmTint='none', osmBrightness=100, osmContrast=100;

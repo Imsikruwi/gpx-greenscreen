@@ -246,8 +246,21 @@ document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElemen
 function setSpdGap(v){ window._spdDistGap=parseInt(v); document.getElementById('spdGapVal').textContent=v+'px'; drawFrame(curFrame); }
 function setOdoScale(v){ odoScale=parseInt(v)/100; document.getElementById('odoScaleVal').textContent=odoScale.toFixed(1)+'×'; drawFrame(curFrame); }
 function toggleDistElev(row){ distShowElev=!distShowElev; const tog=document.getElementById('tog-distelev'); if(tog)tog.classList.toggle('on',distShowElev); drawFrame(curFrame); }
-function toggleGlobalBg(row){ showOverlayBg=!showOverlayBg; document.getElementById('tog-global-bg')?.classList.toggle('on',showOverlayBg); Object.keys(overlayBg).forEach(k=>delete overlayBg[k]); document.querySelectorAll('[id^="tog-bg-"]').forEach(el=>el.classList.toggle('on',showOverlayBg)); drawFrame(curFrame); }
-function toggleOverlayBg(key,row){ const cur=overlayBg[key]!==undefined?overlayBg[key]:showOverlayBg; overlayBg[key]=!cur; document.getElementById('tog-bg-'+key)?.classList.toggle('on',overlayBg[key]); drawFrame(curFrame); }
+function toggleGlobalBg(row){
+  showOverlayBg=!showOverlayBg;
+  document.getElementById('tog-global-bg')?.classList.toggle('on',showOverlayBg);
+  // Reset semua override per-overlay, lalu sinkronkan UI
+  Object.keys(overlayBg).forEach(k=>delete overlayBg[k]);
+  document.querySelectorAll('[id^="tog-bg-"]').forEach(el=>el.classList.toggle('on',showOverlayBg));
+  drawFrame(curFrame);
+}
+function toggleOverlayBg(key,row){
+  // Per-overlay: jika belum punya override, ambil dari global dulu lalu flip
+  const cur = overlayBg[key] !== undefined ? overlayBg[key] : showOverlayBg;
+  overlayBg[key] = !cur;
+  document.getElementById('tog-bg-'+key)?.classList.toggle('on', overlayBg[key]);
+  drawFrame(curFrame);
+}
 function setOp(v){ panelOp=parseInt(v)/100; document.getElementById('opVal').textContent=v+'%'; drawFrame(curFrame); }
 function confirmDialog(title, msg, onConfirm){ const bd=document.createElement('div'); bd.className='confirm-backdrop'; bd.innerHTML=`<div class="confirm-box"><div class="confirm-title">${title}</div><div class="confirm-msg">${msg}</div><div class="confirm-btns"><button class="bs" onclick="this.closest('.confirm-backdrop').remove()">Cancel</button><button class="bp" id="confirm-ok" style="padding:7px 18px">Confirm</button></div></div>`; document.body.appendChild(bd); bd.querySelector('#confirm-ok').onclick=()=>{ bd.remove(); onConfirm(); }; bd.addEventListener('click',e=>{ if(e.target===bd)bd.remove(); }); }
 function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,roadname:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',roadname:'bc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'], ['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); 
@@ -262,7 +275,7 @@ document.getElementById('tog-mapnorth').classList.remove('on'); // Reset status 
 	  document.getElementById('fsVal').textContent='2.20×'; 
 	  document.getElementById('fs-slider').value=220; 
 	  document.querySelectorAll('.chip').forEach(b=>{ const oc=b.getAttribute('onclick'); if(oc&&oc.startsWith('setFS(')){ b.classList.toggle('on', oc==="setFS('xxl',this)"); } }); if(window._dragHandle)window._dragHandle.updateHandles(); if(gpxData)drawFrame(curFrame); notif('Reset to default settings'); }); }
-function clearGPX(){ confirmDialog('Clear GPX','Remove the current GPX file and return to the start screen?',()=>{ gpxData=null; curFrame=0; tfS0=0; tfE0=0; playing=false; cancelAnimationFrame(rafId); document.getElementById('btnPlay').textContent='▶'; document.getElementById('statsSection').style.display='none'; document.getElementById('fmtSection').style.display='none'; document.getElementById('rightPanel').style.display='none'; document.getElementById('tfSection').style.display='none'; document.getElementById('playbar').classList.remove('vis'); document.getElementById('vsb').classList.remove('vis'); document.getElementById('emptyState').style.display='flex'; document.getElementById('btnRender').disabled=true; document.getElementById('btnDownload').style.display='none'; document.getElementById('rpWrap').classList.remove('vis'); const dz2=document.getElementById('dropZone'); dz2.classList.remove('loaded'); dz2.querySelector('.drop-title').textContent='Drop .gpx file here'; dz2.querySelector('.drop-sub').textContent='or click to browse'; document.getElementById('fileInput').value=''; const{W,H}=resWH(); ctx.clearRect(0,0,W,H); ctx.fillStyle=bgColor; ctx.fillRect(0,0,W,H); osmTileCache.clear(); vecCache.clear(); if(window._dragHandle)window._dragHandle.updateHandles(); notif('GPX cleared'); }); }
+function clearGPX(){ confirmDialog('Clear GPX','Remove the current GPX file and return to the start screen?',()=>{ gpxData=null; curFrame=0; tfS0=0; tfE0=0; playing=false; cancelAnimationFrame(rafId); document.getElementById('btnPlay').textContent='▶'; document.getElementById('statsSection').style.display='none'; document.getElementById('fmtSection').style.display='none'; document.getElementById('rightPanel').style.display='none'; document.getElementById('tfSection').style.display='none'; document.getElementById('playbar').classList.remove('vis'); document.getElementById('vsb').classList.remove('vis'); document.getElementById('emptyState').style.display='flex'; document.getElementById('btnRender').disabled=true; document.getElementById('btnDownload').style.display='none'; document.getElementById('rpWrap').classList.remove('vis'); const dz2=document.getElementById('dropZone'); dz2.classList.remove('loaded'); dz2.querySelector('.drop-title').textContent='Drop .gpx file here'; dz2.querySelector('.drop-sub').textContent='or click to browse'; document.getElementById('fileInput').value=''; const{W,H}=resWH(); ctx.clearRect(0,0,W,H); ctx.fillStyle=bgColor; ctx.fillRect(0,0,W,H); osmTileCache.clear(); vecCache.clear(); if(window._dragHandle)window._dragHandle.updateHandles(); const pbSec=document.getElementById('previewBgSection'); if(pbSec) pbSec.style.display='none'; notif('GPX cleared'); }); }
 
 // ═══════════════════════════════════════════════════════════
 // MAP UI CONTROLS (BULLETPROOF VERSION)
@@ -303,8 +316,73 @@ const _initH = canvas.height || 1080;
 ctx.fillStyle = bgColor; // bgColor mengambil nilai '#00b140' dari state.js
 ctx.fillRect(0, 0, _initW, _initH);
 
-function toggleExportTrans(row){
-  exportTransparent = !exportTransparent;
-  const tog = document.getElementById('tog-export-trans');
-  if(tog) tog.classList.toggle('on', exportTransparent);
+
+// ═══════════════════════════════════════════════════════════
+// PREVIEW BACKGROUND IMAGE HANDLERS
+// ═══════════════════════════════════════════════════════════
+
+function loadPreviewBgImage(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      previewBgImage = img;
+      previewBgEnabled = true;
+      document.getElementById('tog-preview-bg-enabled')?.classList.add('on');
+      document.getElementById('previewBgLoaded').style.display = 'block';
+      const shortName = file.name.length > 24 ? file.name.slice(0,22)+'…' : file.name;
+      document.getElementById('previewBgName').textContent = shortName;
+      const lbl = document.getElementById('previewBgUploadBtn');
+      lbl.innerHTML = `<input type="file" accept="image/*" id="previewBgInput" onchange="loadPreviewBgImage(this)" style="display:none">🔄 Change Image`;
+      drawFrame(curFrame);
+      notif('Preview background loaded');
+    };
+    img.onerror = () => notif('Failed to load image','#ff5c5c');
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
+
+function togglePreviewBgEnabled(row){
+  previewBgEnabled = !previewBgEnabled;
+  const tog = document.getElementById('tog-preview-bg-enabled');
+  if(tog) tog.classList.toggle('on', previewBgEnabled);
+  drawFrame(curFrame);
+}
+
+function setPreviewBgFit(mode, el){
+  previewBgFit = mode;
+  const chips = document.getElementById('previewBgFitChips');
+  if(chips) chips.querySelectorAll('.chip').forEach(b => b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  drawFrame(curFrame);
+}
+
+function togglePreviewBgExport(row){
+  previewBgIncludeExport = !previewBgIncludeExport;
+  const tog = document.getElementById('tog-preview-bg-export');
+  if(tog) tog.classList.toggle('on', previewBgIncludeExport);
+  notif(previewBgIncludeExport ? 'Background image: included in export' : 'Background image: preview only');
+}
+
+function clearPreviewBg(){
+  previewBgImage = null;
+  previewBgEnabled = false;
+  previewBgIncludeExport = false;
+  document.getElementById('previewBgLoaded').style.display = 'none';
+  document.getElementById('previewBgName').textContent = '—';
+  document.getElementById('tog-preview-bg-enabled')?.classList.remove('on');
+  document.getElementById('tog-preview-bg-export')?.classList.remove('on');
+  const chips = document.getElementById('previewBgFitChips');
+  if(chips){
+    chips.querySelectorAll('.chip').forEach(b => b.classList.remove('on'));
+    chips.querySelector('.chip')?.classList.add('on');
+  }
+  const lbl = document.getElementById('previewBgUploadBtn');
+  if(lbl) lbl.innerHTML = `<input type="file" accept="image/*" id="previewBgInput" onchange="loadPreviewBgImage(this)" style="display:none">📷 Upload Image`;
+  drawFrame(curFrame);
+  notif('Preview background removed');
+}
+

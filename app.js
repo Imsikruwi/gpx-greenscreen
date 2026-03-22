@@ -314,57 +314,107 @@ function setCompassStyle(style,el){ window._compassStyle=style; if(el&&el.closes
 function handleLandingFile(input){ if(input.files&&input.files[0]){ const mainInput=document.getElementById('fileInput'); const file=input.files[0]; const reader=new FileReader(); reader.onload=e=>{try{parseGPX(e.target.result,file.name)}catch(err){notif('Parse error: '+err.message,'#ff5c5c')}}; reader.readAsText(file); } }
 function showMainApp(){ const lp=document.getElementById('landingPage'); if(lp){lp.style.opacity='0';lp.style.transition='opacity .3s';setTimeout(()=>lp.style.display='none',300);} const bell=document.getElementById('notifBellBtn'); if(bell) bell.style.display='flex'; }
 function savePreset(){
-  try{
-    const preset = {
-      version: 2,
-      // ── Overlay on/off ──
-      opts: {...opts},
-      // ── Posisi (string anchor atau {x,y} custom) ──
-      oPos: JSON.parse(JSON.stringify(oPos)),
-      // ── Skala per-overlay ──
-      oScale: JSON.parse(JSON.stringify(oScale)),
-      // ── Background per-overlay & global ──
-      overlayBg: JSON.parse(JSON.stringify(overlayBg)),
-      showOverlayBg,
-      // ── Global style ──
-      textColor, fontScale, panelOp, bgColor,
-      // ── Speed overlay ──
-      speedUnit, spdStyle, spdMaxMode, spdMaxCustom,
-      spdDistGap: window._spdDistGap||4,
-      // ── GPS Time ──
-      gpsFmt, gpsShowDate,
-      // ── Distance / Odometer ──
-      distDecimals, distShowElev, distOdoMode,
-      odoScale, odoScale2, odoShowBorder,
-      // ── Map ──
-      osmMapShape, osmMapSize, osmZoom, osmStyle,
-      osmTint, osmBrightness, osmContrast,
-      osmShowRoute, osmShowHeading, osmUseOSM,
-      mapBgStyle, mapRouteColor, mapDotColor, mapShowNorth,
-      // ── Coords ──
-      coordFmt, coordShowIcon,
-      // ── G-Force / Compass ──
-      gforceScale: window._gforceScale||2,
-      compassStyle: window._compassStyle||'rose',
-      // ── Dial appearance ──
-      dialMode, dialInputMode, dialYellowPct, dialRedPct, dialYellowMs, dialRedMs,
-      // ── HR / Power ──
-      hrMaxBpm, ftpWatts,
-      // ── Export / render ──
-      exportTransparent, renderFmt, renderRes, fpsVal, bitrateVal,
-      // ── Canvas orientation ──
-      canvasOrient,
-      // ── Overlay Font ──
-      overlayFont,
-    };
-    const blob = new Blob([JSON.stringify(preset,null,2)],{type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'GPXGreenScreen_preset.json';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-    notif('✓ Preset saved');
-  }catch(err){ notif('Save error: '+err.message,'#ff5c5c'); console.error(err); }
+  // Helper: convert HTMLImageElement → base64 data URL (returns null if not available)
+  function imgToDataURL(img){
+    if(!img || !img.naturalWidth) return null;
+    try{
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img,0,0);
+      return c.toDataURL('image/png');
+    }catch(e){ return null; }
+  }
+
+  notif('💾 Saving preset…','#f0a04a');
+
+  // Use setTimeout so the notif renders before potentially heavy base64 work
+  setTimeout(()=>{
+    try{
+      const preset = {
+        version: 3,
+        _savedAt: new Date().toISOString(),
+
+        // ── Overlay on/off ──
+        opts: {...opts},
+
+        // ── Posisi (string anchor atau {x,y} custom) ──
+        oPos: JSON.parse(JSON.stringify(oPos)),
+
+        // ── Skala per-overlay ──
+        oScale: JSON.parse(JSON.stringify(oScale)),
+
+        // ── Background per-overlay & global ──
+        overlayBg: JSON.parse(JSON.stringify(overlayBg)),
+        showOverlayBg,
+
+        // ── Global style ──
+        textColor, fontScale, panelOp, bgColor,
+
+        // ── Overlay Font ──
+        overlayFont,
+
+        // ── Speed overlay ──
+        speedUnit, spdStyle, spdMaxMode, spdMaxCustom,
+        spdDistGap: window._spdDistGap||4,
+
+        // ── GPS Time ──
+        gpsFmt, gpsShowDate,
+
+        // ── Distance / Odometer ──
+        distDecimals, distShowElev, distOdoMode,
+        odoScale, odoScale2, odoShowBorder,
+
+        // ── Map ──
+        osmMapShape, osmMapSize, osmZoom, osmStyle,
+        osmTint, osmBrightness, osmContrast,
+        osmShowRoute, osmShowHeading, osmUseOSM,
+        mapBgStyle, mapRouteColor, mapDotColor, mapGhostColor, mapShowNorth,
+
+        // ── Coords ──
+        coordFmt, coordShowIcon,
+
+        // ── G-Force / Compass ──
+        gforceScale: window._gforceScale||1,
+        compassStyle: window._compassStyle||'rose',
+
+        // ── Dial appearance ──
+        dialMode, dialInputMode, dialYellowPct, dialRedPct, dialYellowMs, dialRedMs,
+
+        // ── HR / Power ──
+        hrMaxBpm, ftpWatts,
+
+        // ── Watermark / Logo ──
+        customWatermarkOpacity,
+        customWatermarkImageData: imgToDataURL(customWatermarkImage),
+
+        // ── Preview Background Image ──
+        previewBgEnabled, previewBgFit, previewBgIncludeExport,
+        previewBgImageData: (previewBgImage && previewBgEnabled)
+          ? imgToDataURL(previewBgImage)
+          : null,
+
+        // ── Export / render ──
+        exportTransparent, renderFmt, renderRes, fpsVal, bitrateVal,
+
+        // ── Canvas orientation ──
+        canvasOrient,
+
+        // ── Playback speed ──
+        playSpeed,
+      };
+
+      const json = JSON.stringify(preset, null, 2);
+      const blob = new Blob([json], {type:'application/json'});
+      const sizeKB = Math.round(blob.size/1024);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      const ts = new Date().toISOString().slice(0,10);
+      a.download = `GPXGreenScreen_preset_${ts}.json`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      notif(`✓ Preset saved — ${sizeKB} KB`);
+    }catch(err){ notif('Save error: '+err.message,'#ff5c5c'); console.error(err); }
+  }, 50);
 }
 
 function loadPresetClick(){ document.getElementById('presetFileInput').click(); }
@@ -380,7 +430,7 @@ function loadPresetFile(input){
 }
 
 function applyPreset(p){
-  if(!p || (p.version!==1 && p.version!==2)){ notif('Invalid preset file','#ff5c5c'); return; }
+  if(!p || ![1,2,3].includes(p.version)){ notif('Invalid or incompatible preset file','#ff5c5c'); return; }
   try{
 
     // ── Overlay on/off ──
@@ -406,15 +456,15 @@ function applyPreset(p){
     }
 
     // ── Speed ──
-    if(p.speedUnit)         speedUnit    = p.speedUnit;
-    if(p.spdStyle)          spdStyle     = p.spdStyle;
-    if(p.spdMaxMode)        spdMaxMode   = p.spdMaxMode;
+    if(p.speedUnit)          speedUnit    = p.speedUnit;
+    if(p.spdStyle)           spdStyle     = p.spdStyle;
+    if(p.spdMaxMode)         spdMaxMode   = p.spdMaxMode;
     if(p.spdMaxCustom!=null) spdMaxCustom = p.spdMaxCustom;
-    if(p.spdDistGap!=null)  window._spdDistGap = p.spdDistGap;
+    if(p.spdDistGap!=null)   window._spdDistGap = p.spdDistGap;
 
     // ── GPS Time ──
-    if(p.gpsFmt)           gpsFmt      = p.gpsFmt;
-    if(p.gpsShowDate!=null) gpsShowDate = p.gpsShowDate;
+    if(p.gpsFmt)            gpsFmt      = p.gpsFmt;
+    if(p.gpsShowDate!=null)  gpsShowDate = p.gpsShowDate;
 
     // ── Distance / Odometer ──
     if(p.distDecimals!=null)  distDecimals  = p.distDecimals;
@@ -425,85 +475,111 @@ function applyPreset(p){
     if(p.odoShowBorder!=null) odoShowBorder = p.odoShowBorder;
 
     // ── Map ──
-    if(p.osmMapShape)         osmMapShape    = p.osmMapShape;
-    if(p.osmMapSize)          osmMapSize     = p.osmMapSize;
-    if(p.osmZoom!=null)       osmZoom        = p.osmZoom;
-    if(p.osmStyle)            osmStyle       = p.osmStyle;
-    if(p.osmTint)             osmTint        = p.osmTint;
-    if(p.osmBrightness!=null) osmBrightness  = p.osmBrightness;
-    if(p.osmContrast!=null)   osmContrast    = p.osmContrast;
-    if(p.osmShowRoute!=null)  osmShowRoute   = p.osmShowRoute;
+    if(p.osmMapShape)          osmMapShape    = p.osmMapShape;
+    if(p.osmMapSize)           osmMapSize     = p.osmMapSize;
+    if(p.osmZoom!=null)        osmZoom        = p.osmZoom;
+    if(p.osmStyle)             osmStyle       = p.osmStyle;
+    if(p.osmTint)              osmTint        = p.osmTint;
+    if(p.osmBrightness!=null)  osmBrightness  = p.osmBrightness;
+    if(p.osmContrast!=null)    osmContrast    = p.osmContrast;
+    if(p.osmShowRoute!=null)   osmShowRoute   = p.osmShowRoute;
     if(p.osmShowHeading!=null) osmShowHeading = p.osmShowHeading;
-    if(p.osmUseOSM!=null)     osmUseOSM      = p.osmUseOSM;
-    if(p.mapBgStyle)          mapBgStyle     = p.mapBgStyle;
-    if(p.mapRouteColor)       mapRouteColor  = p.mapRouteColor;
-    if(p.mapDotColor)         mapDotColor    = p.mapDotColor;
-    if(p.mapShowNorth!=null)  mapShowNorth   = p.mapShowNorth;
+    if(p.osmUseOSM!=null)      osmUseOSM      = p.osmUseOSM;
+    if(p.mapBgStyle)           mapBgStyle     = p.mapBgStyle;
+    if(p.mapRouteColor)        mapRouteColor  = p.mapRouteColor;
+    if(p.mapDotColor)          mapDotColor    = p.mapDotColor;
+    if(p.mapGhostColor)        mapGhostColor  = p.mapGhostColor;
+    if(p.mapShowNorth!=null)   mapShowNorth   = p.mapShowNorth;
 
     // ── Coords ──
-    if(p.coordFmt)           coordFmt      = p.coordFmt;
-    if(p.coordShowIcon!=null) coordShowIcon = p.coordShowIcon;
+    if(p.coordFmt)            coordFmt      = p.coordFmt;
+    if(p.coordShowIcon!=null)  coordShowIcon = p.coordShowIcon;
 
     // ── G-Force / Compass ──
     if(p.gforceScale!=null)  window._gforceScale  = p.gforceScale;
     if(p.compassStyle)       window._compassStyle = p.compassStyle;
-    if(p.dialMode!=null)     { dialMode=p.dialMode; document.getElementById('tog-dial-mode')?.classList.toggle('on',dialMode); const de=document.getElementById('dial-opts'); if(de) de.style.display=dialMode?'flex':'none'; }
-    if(p.dialInputMode)      setDialInputMode(p.dialInputMode, null);
+    if(p.dialMode!=null){
+      dialMode = p.dialMode;
+      document.getElementById('tog-dial-mode')?.classList.toggle('on', dialMode);
+      const de = document.getElementById('dial-opts'); if(de) de.style.display = dialMode?'flex':'none';
+    }
+    if(p.dialInputMode)       setDialInputMode(p.dialInputMode, null);
     if(p.dialYellowPct!=null){ dialYellowPct=p.dialYellowPct; const s=document.getElementById('dial-yellow-pct'); if(s) s.value=dialYellowPct; document.getElementById('dialYellowVal').textContent=dialYellowPct+'%'; }
     if(p.dialRedPct!=null)   { dialRedPct=p.dialRedPct; const s=document.getElementById('dial-red-pct'); if(s) s.value=dialRedPct; document.getElementById('dialRedVal').textContent=dialRedPct+'%'; }
-    if(p.dialYellowMs!=null) dialYellowMs=p.dialYellowMs;
-    if(p.dialRedMs!=null)    dialRedMs=p.dialRedMs;
+    if(p.dialYellowMs!=null)  dialYellowMs = p.dialYellowMs;
+    if(p.dialRedMs!=null)     dialRedMs    = p.dialRedMs;
     if(dialInputMode==='speed') updateDialSpeedLabels();
 
     // ── HR / Power ──
-    if(p.hrMaxBpm!=null)  hrMaxBpm  = p.hrMaxBpm;
-    if(p.ftpWatts!=null)  ftpWatts  = p.ftpWatts;
+    if(p.hrMaxBpm!=null) hrMaxBpm = p.hrMaxBpm;
+    if(p.ftpWatts!=null) ftpWatts = p.ftpWatts;
+
+    // ── Watermark opacity ──
+    if(p.customWatermarkOpacity!=null) customWatermarkOpacity = p.customWatermarkOpacity;
+
+    // ── Preview Background state ──
+    if(p.previewBgEnabled!=null)        previewBgEnabled        = p.previewBgEnabled;
+    if(p.previewBgFit)                  previewBgFit            = p.previewBgFit;
+    if(p.previewBgIncludeExport!=null)  previewBgIncludeExport  = p.previewBgIncludeExport;
 
     // ── Export / render ──
     if(p.exportTransparent!=null) exportTransparent = p.exportTransparent;
-    if(p.renderFmt)   renderFmt  = p.renderFmt;
-    if(p.renderRes)   renderRes  = p.renderRes;
-    if(p.fpsVal!=null) fpsVal    = p.fpsVal;
+    if(p.renderFmt)    renderFmt  = p.renderFmt;
+    if(p.renderRes)    renderRes  = p.renderRes;
+    if(p.fpsVal!=null) fpsVal     = p.fpsVal;
     if(p.bitrateVal!=null) bitrateVal = p.bitrateVal;
 
-    // ══════════════════════════════════════════
-    // SYNC UI
-    // ══════════════════════════════════════════
+    // ── Play speed ──
+    if(p.playSpeed!=null) playSpeed = p.playSpeed;
+
+    // ════════════════════════════════════════════════════════
+    // SYNC UI — semua elemen HTML disinkronkan ke state
+    // ════════════════════════════════════════════════════════
 
     // Overlay toggle cards
     Object.keys(opts).forEach(key=>{
-      const tog  = document.getElementById('tog-'+key);
-      const card = document.getElementById('oc-'+key);
-      if(tog)  tog.classList.toggle('on', !!opts[key]);
-      if(card) card.classList.toggle('off', !opts[key]);
+      document.getElementById('tog-'+key)?.classList.toggle('on', !!opts[key]);
+      document.getElementById('oc-'+key)?.classList.toggle('off', !opts[key]);
     });
 
-    // Background per-overlay toggles
+    // Background per-overlay
     document.getElementById('tog-global-bg')?.classList.toggle('on', showOverlayBg);
     document.querySelectorAll('[id^="tog-bg-"]').forEach(el=>{
       const key = el.id.replace('tog-bg-','');
-      const val = overlayBg[key] !== undefined ? overlayBg[key] : showOverlayBg;
-      el.classList.toggle('on', val);
+      el.classList.toggle('on', overlayBg[key] !== undefined ? overlayBg[key] : showOverlayBg);
     });
 
-    // Font scale slider
+    // Font scale
     const fsSlider = document.getElementById('fs-slider');
     if(fsSlider){ fsSlider.value = Math.round(fontScale*100); document.getElementById('fsVal').textContent = fontScale.toFixed(2)+'×'; }
 
-    // Opacity slider
+    // Opacity
     const opSlider = document.querySelector('input[oninput="setOp(this.value)"]');
     if(opSlider){ opSlider.value = Math.round(panelOp*100); document.getElementById('opVal').textContent = Math.round(panelOp*100)+'%'; }
 
     // BG color chips
-    const bgMap = {'#00b140':'green','#0047AB':'blue','#000000':'black','#1a1a2e':'navy'};
+    const bgMap = {'#00b140':'green','#0047ab':'blue','#000000':'black','#1a1a2e':'navy'};
     document.querySelectorAll('.chips [id^="bg-"]').forEach(b=>b.classList.remove('on'));
     const knownKey = bgMap[bgColor.toLowerCase()];
     if(knownKey) document.getElementById('bg-'+knownKey)?.classList.add('on');
-    else { document.getElementById('bg-custom')?.classList.add('on'); }
+    else document.getElementById('bg-custom')?.classList.add('on');
     const bgPicker = document.getElementById('bg-color-picker');
     const bgHex    = document.getElementById('bg-hex-input');
     if(bgPicker) bgPicker.value = bgColor;
     if(bgHex)    bgHex.value   = bgColor;
+
+    // Text color picker
+    const tcPicker = document.getElementById('text-color-picker');
+    const tcHex    = document.getElementById('text-hex-input');
+    if(tcPicker) tcPicker.value = textColor;
+    if(tcHex)    tcHex.value   = textColor;
+    // Sync color swatches
+    document.querySelectorAll('.sw').forEach(sw=>{
+      sw.classList.toggle('on', sw.style.background === textColor || sw.style.backgroundColor === textColor);
+    });
+
+    // Overlay font
+    if(p.overlayFont && OVERLAY_FONTS[p.overlayFont]) setOverlayFont(p.overlayFont, null);
 
     // Speed unit
     document.querySelectorAll('[id^="unit-"]').forEach(b=>b.classList.remove('on'));
@@ -516,13 +592,38 @@ function applyPreset(p){
     // Speed max mode
     document.querySelectorAll('[id^="spd-max-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('spd-max-'+spdMaxMode)?.classList.add('on');
+    if(spdMaxMode==='custom' && spdMaxCustom>0){
+      const btn = document.getElementById('spd-max-custom');
+      if(btn) btn.textContent = Math.round(cvtSpd(spdMaxCustom))+' '+spdLabel();
+    }
+
+    // Speed gap slider
+    const sgSlider = document.getElementById('spd-gap-slider');
+    if(sgSlider){ sgSlider.value = window._spdDistGap; document.getElementById('spdGapVal').textContent = window._spdDistGap+'px'; }
 
     // GPS format
     document.querySelectorAll('[id^="tf-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('tf-'+gpsFmt)?.classList.add('on');
     document.getElementById('tog-gpsdate')?.classList.toggle('on', gpsShowDate);
 
-    // Map
+    // Distance decimals
+    document.querySelectorAll('[onclick^="setDistDec"]').forEach(b=>{
+      b.classList.toggle('on', b.getAttribute('onclick').includes('('+distDecimals+','));
+    });
+    document.getElementById('tog-distelev')?.classList.toggle('on', distShowElev);
+
+    // Odometer mode & sliders
+    document.getElementById('tog-distodo')?.classList.toggle('on', distOdoMode);
+    const odoSizeOpts = document.getElementById('odo-size-opts');
+    if(odoSizeOpts) odoSizeOpts.style.display = distOdoMode ? 'block' : 'none';
+    const odoSl = document.getElementById('odo-scale-slider');
+    if(odoSl){ odoSl.value = Math.round(odoScale*100); document.getElementById('odoScaleVal').textContent = odoScale.toFixed(1)+'×'; }
+    const odoSl2 = document.getElementById('odo-scale-slider2');
+    if(odoSl2){ odoSl2.value = Math.round(odoScale2*100); document.getElementById('odoScaleVal2').textContent = odoScale2.toFixed(1)+'×'; }
+    document.getElementById('tog-bg-odometer')?.classList.toggle('on',
+      overlayBg['odometer'] !== undefined ? overlayBg['odometer'] : showOverlayBg);
+
+    // Map settings
     document.querySelectorAll('[id^="osm-shape-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('osm-shape-'+osmMapShape)?.classList.add('on');
     document.querySelectorAll('[id^="osm-style-"]').forEach(b=>b.classList.remove('on'));
@@ -540,11 +641,26 @@ function applyPreset(p){
     if(ozSlider){ ozSlider.value = osmZoom; const ozVal = document.getElementById('osmZoomVal'); if(ozVal) ozVal.textContent = osmZoom; }
     const brSlider = document.getElementById('osmBrightnessSlider');
     if(brSlider) brSlider.value = osmBrightness;
+    // Route color picker
+    const rcp = document.getElementById('route-color-picker');
+    if(rcp) rcp.value = mapRouteColor;
+    document.querySelectorAll('[id^="rc-"]').forEach(b=>b.classList.remove('on'));
+    // Dot color picker
+    const dcp = document.getElementById('dot-color-picker');
+    if(dcp) dcp.value = mapDotColor;
+    document.querySelectorAll('[id^="dc-"]').forEach(b=>b.classList.remove('on'));
 
     // Coords
     document.querySelectorAll('[id^="coord-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('coord-'+coordFmt)?.classList.add('on');
     document.getElementById('tog-coordicon')?.classList.toggle('on', coordShowIcon);
+
+    // G-Force scale chips (1G / 2G / 3G)
+    const gfsVal = window._gforceScale||1;
+    document.querySelectorAll('[onclick^="setGforceScale"]').forEach(b=>{
+      const match = b.getAttribute('onclick').match(/setGforceScale\((\d+)/);
+      if(match) b.classList.toggle('on', parseInt(match[1]) === gfsVal);
+    });
 
     // Compass style
     document.querySelectorAll('[id^="compass-style-"]').forEach(b=>b.classList.remove('on'));
@@ -552,11 +668,24 @@ function applyPreset(p){
 
     // HR max slider
     const hrSlider = document.getElementById('hr-slider');
-    if(hrSlider){ hrSlider.value = hrMaxBpm; const hrVal = document.getElementById('hrMaxVal'); if(hrVal) hrVal.textContent = hrMaxBpm+' bpm'; }
+    if(hrSlider){ hrSlider.value = hrMaxBpm; document.getElementById('hrMaxVal').textContent = hrMaxBpm+' bpm'; }
 
     // FTP slider
     const ftpSlider = document.getElementById('ftp-slider');
-    if(ftpSlider){ ftpSlider.value = ftpWatts; const ftpVal = document.getElementById('ftpVal'); if(ftpVal) ftpVal.textContent = ftpWatts+' W'; }
+    if(ftpSlider){ ftpSlider.value = ftpWatts; document.getElementById('ftpVal').textContent = ftpWatts+' W'; }
+
+    // Watermark opacity slider
+    const wmSlider = document.getElementById('wm-opacity-slider');
+    if(wmSlider){ wmSlider.value = Math.round(customWatermarkOpacity*100); document.getElementById('wmOpacityVal').textContent = Math.round(customWatermarkOpacity*100)+'%'; }
+
+    // Preview BG toggles & fit chips
+    document.getElementById('tog-preview-bg-enabled')?.classList.toggle('on', previewBgEnabled);
+    document.getElementById('tog-preview-bg-export')?.classList.toggle('on', previewBgIncludeExport);
+    const bgFitChips = document.getElementById('previewBgFitChips');
+    if(bgFitChips) bgFitChips.querySelectorAll('.chip').forEach(b=>{
+      const m = b.getAttribute('onclick').match(/'([^']+)'/);
+      if(m) b.classList.toggle('on', m[1] === previewBgFit);
+    });
 
     // Export transparent
     document.getElementById('tog-export-trans')?.classList.toggle('on', exportTransparent);
@@ -584,21 +713,75 @@ function applyPreset(p){
       document.querySelector(`.br-presets .chip[onclick*="${bitrateVal}"]`)?.classList.add('on');
     }
 
+    // Play speed chips
+    document.querySelectorAll('.playbar .chip[onclick^="setPlaySpeed"]').forEach(b=>{
+      const m = b.getAttribute('onclick').match(/setPlaySpeed\((\d+)/);
+      if(m) b.classList.toggle('on', parseInt(m[1]) === playSpeed);
+    });
+
     // Canvas orientation
     if(p.canvasOrient){
       canvasOrient = p.canvasOrient;
-      const ob = document.getElementById('orient-'+canvasOrient);
-      if(ob) ob.click();
+      document.getElementById('orient-'+canvasOrient)?.click();
     }
 
-    // Overlay font
-    if(p.overlayFont && OVERLAY_FONTS[p.overlayFont]){
-      setOverlayFont(p.overlayFont, null);
+    // ── Restore images async (base64 → HTMLImageElement) ──
+    // Must happen after state is set so drawFrame picks them up correctly
+
+    function restoreImage(dataURL, onDone){
+      if(!dataURL){ onDone(null); return; }
+      const img = new Image();
+      img.onload  = () => onDone(img);
+      img.onerror = () => { console.warn('Preset: failed to restore image'); onDone(null); };
+      img.src = dataURL;
     }
 
-    if(gpxData) drawFrame(curFrame);
-    if(window._dragHandle) window._dragHandle.updateHandles();
-    notif('✓ Preset loaded');
+    let pendingImages = 0;
+    const tryFinalDraw = () => {
+      pendingImages--;
+      if(pendingImages <= 0){
+        if(gpxData) drawFrame(curFrame);
+        if(window._dragHandle) window._dragHandle.updateHandles();
+        notif('✓ Preset loaded'+(p._savedAt ? ' (saved '+p._savedAt.slice(0,10)+')' : ''));
+      }
+    };
+
+    // Watermark image
+    pendingImages++;
+    restoreImage(p.customWatermarkImageData, img => {
+      customWatermarkImage = img;
+      if(img){
+        document.getElementById('wmLoaded')?.style && (document.getElementById('wmLoaded').style.display = 'flex');
+        const fn = document.getElementById('wmFileName');
+        if(fn) fn.textContent = 'from preset';
+        const btn = document.getElementById('wmUploadBtn');
+        if(btn) btn.innerHTML = `<input type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" id="wmImageInput" onchange="loadCustomWatermark(this)" style="display:none">🔄 Change Logo`;
+      }
+      tryFinalDraw();
+    });
+
+    // Preview background image
+    pendingImages++;
+    restoreImage(p.previewBgImageData, img => {
+      if(img){
+        previewBgImage   = img;
+        previewBgEnabled = p.previewBgEnabled !== false;
+        document.getElementById('previewBgLoaded')?.style && (document.getElementById('previewBgLoaded').style.display = 'block');
+        const pbn = document.getElementById('previewBgName');
+        if(pbn) pbn.textContent = 'from preset';
+        const lbl = document.getElementById('previewBgUploadBtn');
+        if(lbl) lbl.innerHTML = `<input type="file" accept="image/*" id="previewBgInput" onchange="loadPreviewBgImage(this)" style="display:none">🔄 Change Image`;
+        document.getElementById('tog-preview-bg-enabled')?.classList.toggle('on', previewBgEnabled);
+      } else {
+        // If no bg image saved, clear it
+        previewBgImage   = null;
+        previewBgEnabled = false;
+        document.getElementById('previewBgLoaded')?.style && (document.getElementById('previewBgLoaded').style.display = 'none');
+        document.getElementById('tog-preview-bg-enabled')?.classList.remove('on');
+      }
+      tryFinalDraw();
+    });
+
   }catch(err){ notif('Load error: '+err.message,'#ff5c5c'); console.error(err); }
 }
 function toggleFullscreen(){ const pc=document.getElementById('centerPanel'); if(!document.fullscreenElement&&!document.webkitFullscreenElement){ const fn=pc.requestFullscreen||pc.webkitRequestFullscreen||pc.mozRequestFullScreen; if(fn) fn.call(pc); document.getElementById('btnFullscreen').textContent='✕ Exit'; } else { const fn=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen; if(fn) fn.call(document); document.getElementById('btnFullscreen').textContent='⛶'; } }

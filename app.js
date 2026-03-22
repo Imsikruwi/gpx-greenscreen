@@ -354,6 +354,8 @@ function savePreset(){
       exportTransparent, renderFmt, renderRes, fpsVal, bitrateVal,
       // ── Canvas orientation ──
       canvasOrient,
+      // ── Overlay Font ──
+      overlayFont,
     };
     const blob = new Blob([JSON.stringify(preset,null,2)],{type:'application/json'});
     const a = document.createElement('a');
@@ -589,6 +591,11 @@ function applyPreset(p){
       if(ob) ob.click();
     }
 
+    // Overlay font
+    if(p.overlayFont && OVERLAY_FONTS[p.overlayFont]){
+      setOverlayFont(p.overlayFont, null);
+    }
+
     if(gpxData) drawFrame(curFrame);
     if(window._dragHandle) window._dragHandle.updateHandles();
     notif('✓ Preset loaded');
@@ -613,11 +620,13 @@ function toggleOverlayBg(key,row){
   const cur = overlayBg[key] !== undefined ? overlayBg[key] : showOverlayBg;
   overlayBg[key] = !cur;
   document.getElementById('tog-bg-'+key)?.classList.toggle('on', overlayBg[key]);
+  // Odometer: satu tombol mengontrol border sekaligus background
+  if(key === 'odometer'){ odoShowBorder = overlayBg[key]; }
   drawFrame(curFrame);
 }
 function setOp(v){ panelOp=parseInt(v)/100; document.getElementById('opVal').textContent=v+'%'; drawFrame(curFrame); }
 function confirmDialog(title, msg, onConfirm){ const bd=document.createElement('div'); bd.className='confirm-backdrop'; bd.innerHTML=`<div class="confirm-box"><div class="confirm-title">${title}</div><div class="confirm-msg">${msg}</div><div class="confirm-btns"><button class="bs" onclick="this.closest('.confirm-backdrop').remove()">Cancel</button><button class="bp" id="confirm-ok" style="padding:7px 18px">Confirm</button></div></div>`; document.body.appendChild(bd); bd.querySelector('#confirm-ok').onclick=()=>{ bd.remove(); onConfirm(); }; bd.addEventListener('click',e=>{ if(e.target===bd)bd.remove(); }); }
-function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'], ['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); 
+function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'], ['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); setOverlayFont('mono', null);
 document.getElementById('tog-mapnorth').classList.remove('on'); // Reset status global overlay BG ke OFF
       showOverlayBg = false;
       document.getElementById('tog-global-bg')?.classList.remove('on');
@@ -746,8 +755,14 @@ function clearPreviewBg(){
 // ═══════════════════════════════════════════════════════════
 function setOverlayFont(font, el){
   overlayFont = font;
-  document.querySelectorAll('#overlay-font-chips .chip').forEach(b=>b.classList.remove('on'));
-  if(el) el.classList.add('on');
+  // Sync semua chip font (ada di beberapa div group, bukan hanya #overlay-font-chips)
+  document.querySelectorAll('[id^="ofnt-"]').forEach(b => b.classList.remove('on'));
+  const active = document.getElementById('ofnt-' + font);
+  if(active) active.classList.add('on');
+  // Update live preview box
+  const fam = OVERLAY_FONTS[font]?.family || OVERLAY_FONTS.mono.family;
+  const prev = document.getElementById('font-preview-text');
+  if(prev) prev.style.fontFamily = fam;
   drawFrame(curFrame);
 }
 

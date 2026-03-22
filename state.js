@@ -20,11 +20,24 @@ let hrMaxBpm=190, ftpWatts=200;
 // ── OVERLAY FONT ──
 let overlayFont='mono';
 const OVERLAY_FONTS={
-  mono:    {label:'Mono',    family:"'IBM Plex Mono',monospace"},
-  sans:    {label:'Sans',    family:"'Inter',sans-serif"},
-  display: {label:'Display', family:"'Orbitron',sans-serif"},
-  slab:    {label:'Slab',    family:"'Roboto Slab',serif"},
-  rounded: {label:'Rounded', family:"'Nunito',sans-serif"},
+  // ── Monospace ──
+  mono:      {label:'Mono',       family:"'IBM Plex Mono',monospace",    group:'mono'},
+  spacemono: {label:'Space Mono', family:"'Space Mono',monospace",       group:'mono'},
+  courier:   {label:'Courier',    family:"'Courier Prime',monospace",    group:'mono'},
+  // ── Sans-Serif ──
+  sans:      {label:'Inter',      family:"'Inter',sans-serif",           group:'sans'},
+  barlow:    {label:'Barlow',     family:"'Barlow Condensed',sans-serif",group:'sans'},
+  rajdhani:  {label:'Rajdhani',   family:"'Rajdhani',sans-serif",        group:'sans'},
+  // ── Display / Tech ──
+  display:   {label:'Orbitron',   family:"'Orbitron',sans-serif",        group:'display'},
+  exo:       {label:'Exo 2',      family:"'Exo 2',sans-serif",           group:'display'},
+  dseg:      {label:'Digital',    family:"'DSEG7 Classic',monospace",    group:'display'},
+  // ── Serif / Slab ──
+  slab:      {label:'Slab',       family:"'Roboto Slab',serif",          group:'slab'},
+  merriw:    {label:'Merriweather',family:"'Merriweather',serif",        group:'slab'},
+  // ── Rounded / Friendly ──
+  rounded:   {label:'Nunito',     family:"'Nunito',sans-serif",          group:'rounded'},
+  quicksand: {label:'Quicksand',  family:"'Quicksand',sans-serif",       group:'rounded'},
 };
 function ovFont(){ return OVERLAY_FONTS[overlayFont]?.family||OVERLAY_FONTS.mono.family; }
 

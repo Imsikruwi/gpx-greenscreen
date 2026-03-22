@@ -74,7 +74,9 @@
   </script>
 <meta name="description" content="Turn your GPX tracks into video overlays — by Imsikruwi, 2026">
 <title>GPX-GreenScreen</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800&family=Exo+2:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Roboto+Slab:wght@400;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- DSEG7 Classic (digital/7-seg font) -->
+  <link href="https://cdn.jsdelivr.net/npm/dseg@0.46.0/css/dseg.min.css" rel="stylesheet">
 
 <link rel="stylesheet" href="style.css">
 
@@ -432,6 +434,67 @@
       </div>
     </div>
 
+    <!-- ── OVERLAY FONT PICKER ── -->
+    <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Overlay Font</div>
+
+      <!-- Group: Monospace -->
+      <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">Monospace</div>
+      <div id="overlay-font-chips" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px">
+        <button class="chip on" id="ofnt-mono"      onclick="setOverlayFont('mono',this)"
+          style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 8px">Mono</button>
+        <button class="chip"    id="ofnt-spacemono" onclick="setOverlayFont('spacemono',this)"
+          style="font-family:'Space Mono',monospace;font-size:10px;padding:3px 8px">Space</button>
+        <button class="chip"    id="ofnt-courier"   onclick="setOverlayFont('courier',this)"
+          style="font-family:'Courier Prime',monospace;font-size:10px;padding:3px 8px">Courier</button>
+      </div>
+
+      <!-- Group: Sans -->
+      <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">Sans-Serif</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px">
+        <button class="chip" id="ofnt-sans"     onclick="setOverlayFont('sans',this)"
+          style="font-family:'Inter',sans-serif;font-size:10px;padding:3px 8px">Inter</button>
+        <button class="chip" id="ofnt-barlow"   onclick="setOverlayFont('barlow',this)"
+          style="font-family:'Barlow Condensed',sans-serif;font-size:10px;padding:3px 8px">Barlow</button>
+        <button class="chip" id="ofnt-rajdhani" onclick="setOverlayFont('rajdhani',this)"
+          style="font-family:'Rajdhani',sans-serif;font-size:10px;padding:3px 8px">Rajdhani</button>
+      </div>
+
+      <!-- Group: Display/Tech -->
+      <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">Display / Tech</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px">
+        <button class="chip" id="ofnt-display" onclick="setOverlayFont('display',this)"
+          style="font-family:'Orbitron',sans-serif;font-size:10px;padding:3px 8px">Orbitron</button>
+        <button class="chip" id="ofnt-exo"     onclick="setOverlayFont('exo',this)"
+          style="font-family:'Exo 2',sans-serif;font-size:10px;padding:3px 8px">Exo 2</button>
+        <button class="chip" id="ofnt-dseg"    onclick="setOverlayFont('dseg',this)"
+          style="font-family:'DSEG7 Classic',monospace;font-size:10px;padding:3px 8px;letter-spacing:.05em">Digital</button>
+      </div>
+
+      <!-- Group: Serif/Slab -->
+      <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">Serif / Slab</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px">
+        <button class="chip" id="ofnt-slab"   onclick="setOverlayFont('slab',this)"
+          style="font-family:'Roboto Slab',serif;font-size:10px;padding:3px 8px">Slab</button>
+        <button class="chip" id="ofnt-merriw" onclick="setOverlayFont('merriw',this)"
+          style="font-family:'Merriweather',serif;font-size:10px;padding:3px 8px">Merriw.</button>
+      </div>
+
+      <!-- Group: Rounded -->
+      <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:3px">Rounded</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:2px">
+        <button class="chip" id="ofnt-rounded"   onclick="setOverlayFont('rounded',this)"
+          style="font-family:'Nunito',sans-serif;font-size:10px;padding:3px 8px">Nunito</button>
+        <button class="chip" id="ofnt-quicksand" onclick="setOverlayFont('quicksand',this)"
+          style="font-family:'Quicksand',sans-serif;font-size:10px;padding:3px 8px">Quicksand</button>
+      </div>
+
+      <!-- Live preview -->
+      <div id="font-preview-box" style="margin-top:7px;padding:6px 10px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);text-align:center;transition:font-family .2s">
+        <span id="font-preview-text" style="font-size:18px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;letter-spacing:.02em">88 km/h · 12.4 km</span>
+      </div>
+    </div>
+
   </div>
   <div class="pt" style="margin-top:4px">Overlay</div>
   <div class="cg">
@@ -598,10 +661,6 @@
           <div class="sm"><span class="sl">Size</span><span class="sv" id="odoScaleVal2">1.0×</span></div>
           <input type="range" id="odo-scale-slider2" min="50" max="250" value="100" step="5"
                  oninput="setOdoScale2(this.value)" style="width:100%;margin-top:2px">
-        </div>
-        <div class="tr" onclick="toggleOdoBorder(this)" style="margin-top:4px">
-          <span class="tl" style="font-size:11px">Show border / background</span>
-          <div class="tt on" id="tog-odoborder"><div class="th"></div></div>
         </div>
       </div>
     </div>

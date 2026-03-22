@@ -10,7 +10,7 @@ function projMap(lat,lon){ const{minLat,maxLat,minLon,maxLon}=gpxData; const pd=
 function ovFS(key){ return fontScale*(oScale[key]||1); }
 
 function posXY(pos,W,H,w,h,pad=16){
-  const pb=opts.prog?14:0; if(pos && typeof pos==='object') return {x:Math.max(0,Math.min(W-w,pos.x)), y:Math.max(0,Math.min(H-h,pos.y))};
+  const pb=opts.prog?14:0; if(pos && typeof pos==='object') return {x:Math.max(-w*0.5,Math.min(W-w*0.5,pos.x)), y:Math.max(-h*0.5,Math.min(H-h*0.5,pos.y))};
   const mc=H/2-h/2; 
   switch(pos){ 
     case'tl':return{x:pad,y:pad}; 

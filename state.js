@@ -18,15 +18,23 @@ window._spdDistGap=4;
 let hrMaxBpm=190, ftpWatts=200;
 
 // ── OVERLAY FONT ──
-let overlayFont = 'mono';
-const OVERLAY_FONTS = {
-  mono:    { label:'Mono',    family:"'IBM Plex Mono', monospace" },
-  sans:    { label:'Sans',    family:"'Inter', sans-serif" },
-  display: { label:'Display', family:"'Orbitron', sans-serif" },
-  slab:    { label:'Slab',    family:"'Roboto Slab', serif" },
-  rounded: { label:'Rounded', family:"'Nunito', sans-serif" },
+let overlayFont='mono';
+const OVERLAY_FONTS={
+  mono:    {label:'Mono',    family:"'IBM Plex Mono',monospace"},
+  sans:    {label:'Sans',    family:"'Inter',sans-serif"},
+  display: {label:'Display', family:"'Orbitron',sans-serif"},
+  slab:    {label:'Slab',    family:"'Roboto Slab',serif"},
+  rounded: {label:'Rounded', family:"'Nunito',sans-serif"},
 };
-function ovFont(){ return OVERLAY_FONTS[overlayFont]?.family || OVERLAY_FONTS.mono.family; }
+function ovFont(){ return OVERLAY_FONTS[overlayFont]?.family||OVERLAY_FONTS.mono.family; }
+
+// ── DIAL APPEARANCE ──
+let dialMode=false;
+let dialInputMode='pct';   // 'pct' = percent of max | 'speed' = fixed speed value
+let dialYellowPct=60;      // % threshold (0-100)
+let dialRedPct=85;
+let dialYellowMs=25;       // fixed speed in m/s (~90 km/h)
+let dialRedMs=30;          // fixed speed in m/s (~108 km/h)
 
 // ── PREVIEW BACKGROUND IMAGE ──
 let previewBgImage=null;

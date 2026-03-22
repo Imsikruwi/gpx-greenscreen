@@ -74,7 +74,7 @@
   </script>
 <meta name="description" content="Turn your GPX tracks into video overlays — by Imsikruwi, 2026">
 <title>GPX-GreenScreen</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400;500;700&family=Orbitron:wght@400;700;900&family=Roboto+Slab:wght@400;700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="style.css">
 
@@ -403,13 +403,13 @@
       <input type="range" id="fs-slider" min="40" max="350" value="220" step="5" oninput="setFSSlider(this.value)">
     </div>
     <div class="sr">
-      <div class="sm"><span class="sl" style="font-size:10px">Opacity</span><span class="sv" id="opVal">30%</span></div>
-      <input type="range" min="0" max="100" value="30" oninput="setOp(this.value)">
+      <div class="sm"><span class="sl" style="font-size:10px">Opacity</span><span class="sv" id="opVal">100%</span></div>
+      <input type="range" min="0" max="100" value="0" oninput="setOp(this.value)">
     </div>
     <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px;display:flex;align-items:center;justify-content:space-between">
       <span style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)">Overlay BG</span>
       <div class="tr" onclick="toggleGlobalBg(this)" style="border:none;padding:0;background:none">
-        <div class="tt on" id="tog-global-bg"><div class="th"></div></div>
+        <div class="tt" id="tog-global-bg"><div class="th"></div></div>
       </div>
     </div>
     <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
@@ -432,21 +432,7 @@
       </div>
     </div>
 
-    <!-- ── OVERLAY FONT ── -->
-    <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
-      <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:5px">Overlay Font</div>
-      <div class="chips" id="overlay-font-chips" style="flex-wrap:wrap;gap:4px">
-        <button class="chip on" id="ofont-mono"    onclick="setOverlayFont('mono',this)"    style="font-family:'IBM Plex Mono',monospace">Mono</button>
-        <button class="chip"    id="ofont-sans"    onclick="setOverlayFont('sans',this)"    style="font-family:'Inter',sans-serif">Sans</button>
-        <button class="chip"    id="ofont-display" onclick="setOverlayFont('display',this)" style="font-family:'Orbitron',sans-serif">Display</button>
-        <button class="chip"    id="ofont-slab"    onclick="setOverlayFont('slab',this)"    style="font-family:'Roboto Slab',serif">Slab</button>
-        <button class="chip"    id="ofont-rounded" onclick="setOverlayFont('rounded',this)" style="font-family:'Nunito',sans-serif">Rounded</button>
-      </div>
-    </div>
-
   </div>
-
-
   <div class="pt" style="margin-top:4px">Overlay</div>
   <div class="cg">
 
@@ -480,6 +466,70 @@
           <button class="chip" id="spd-style-hud" onclick="setSpdStyle('hud',this)">HUD</button>
           <button class="chip" id="spd-style-vbar" onclick="setSpdStyle('vbar',this)">▌Vertical</button>
           <button class="chip" id="spd-style-hbar" onclick="setSpdStyle('hbar',this)">━ Horizontal</button>
+        </div>
+
+        <!-- ── DIAL APPEARANCE ── -->
+        <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)">🎨 Dial Appearance</span>
+            <div class="tr" onclick="toggleDialMode(this)" style="border:none;padding:0;background:none;cursor:pointer">
+              <div class="tt" id="tog-dial-mode"><div class="th"></div></div>
+            </div>
+          </div>
+          <div id="dial-opts" style="display:none;flex-direction:column;gap:6px">
+            <div style="font-size:10px;color:var(--text3);font-family:var(--fm);line-height:1.5">
+              Arc turns 🟡 then 🔴 as speed rises. Only the arc changes colour.
+            </div>
+
+            <!-- Mode selector: % or fixed speed -->
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:10px;color:var(--text2);font-family:var(--fm)">Threshold mode</span>
+              <div class="chips" style="gap:4px">
+                <button class="chip on" id="dial-mode-pct"   onclick="setDialInputMode('pct',this)">%</button>
+                <button class="chip"    id="dial-mode-speed" onclick="setDialInputMode('speed',this)" id="dial-mode-speed-btn">Speed</button>
+              </div>
+            </div>
+
+            <!-- % mode -->
+            <div id="dial-pct-opts">
+              <div class="sr">
+                <div class="sm">
+                  <span class="sl" style="font-size:10px">🟡 Yellow from</span>
+                  <span class="sv" id="dialYellowVal">60%</span>
+                </div>
+                <input type="range" id="dial-yellow-pct" min="10" max="90" value="60" step="5"
+                       oninput="setDialThreshold('yellow','pct',this.value)" style="width:100%;margin-top:2px">
+              </div>
+              <div class="sr" style="margin-top:4px">
+                <div class="sm">
+                  <span class="sl" style="font-size:10px">🔴 Red from</span>
+                  <span class="sv" id="dialRedVal">85%</span>
+                </div>
+                <input type="range" id="dial-red-pct" min="20" max="99" value="85" step="5"
+                       oninput="setDialThreshold('red','pct',this.value)" style="width:100%;margin-top:2px">
+              </div>
+            </div>
+
+            <!-- Speed mode -->
+            <div id="dial-speed-opts" style="display:none">
+              <div class="sr">
+                <div class="sm">
+                  <span class="sl" style="font-size:10px">🟡 Yellow from</span>
+                  <span class="sv" id="dialYellowSpdVal">90 km/h</span>
+                </div>
+                <input type="range" id="dial-yellow-spd" min="10" max="200" value="90" step="5"
+                       oninput="setDialThreshold('yellow','speed',this.value)" style="width:100%;margin-top:2px">
+              </div>
+              <div class="sr" style="margin-top:4px">
+                <div class="sm">
+                  <span class="sl" style="font-size:10px">🔴 Red from</span>
+                  <span class="sv" id="dialRedSpdVal">108 km/h</span>
+                </div>
+                <input type="range" id="dial-red-spd" min="15" max="250" value="108" step="5"
+                       oninput="setDialThreshold('red','speed',this.value)" style="width:100%;margin-top:2px">
+              </div>
+            </div>
+          </div>
         </div>
         <div class="sub-lbl">Max Speed</div>
         <div class="chips" id="spd-max-chips">
@@ -543,6 +593,7 @@
           <div class="chip" onclick="setPos('odometer','ml',this)">←</div><div class="chip" onclick="setPos('odometer','mc',this)">·</div><div class="chip" onclick="setPos('odometer','mr',this)">→</div>
           <div class="chip" onclick="setPos('odometer','bl',this)">↙</div><div class="chip on" onclick="setPos('odometer','bc',this)">↓</div><div class="chip" onclick="setPos('odometer','br',this)">↘</div>
         </div>
+        <div class="tr" onclick="toggleOverlayBg('odometer',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-odometer"><div class="th"></div></div></div>
         <div class="sr" style="margin-top:2px">
           <div class="sm"><span class="sl">Size</span><span class="sv" id="odoScaleVal2">1.0×</span></div>
           <input type="range" id="odo-scale-slider2" min="50" max="250" value="100" step="5"
@@ -782,43 +833,13 @@
       <div class="oc-body">
         <div class="ocp3" style="display:none" id="pos-watermark">
           <div class="chip on" onclick="setPos('watermark','tl',this)">↖</div>
+          
           <div class="chip" onclick="setPos('watermark','tc',this)">↑</div><div class="chip" onclick="setPos('watermark','tr',this)">↗</div>
           <div class="chip" onclick="setPos('watermark','ml',this)">←</div><div class="chip" onclick="setPos('watermark','mc',this)">·</div><div class="chip" onclick="setPos('watermark','mr',this)">→</div>
           <div class="chip" onclick="setPos('watermark','bl',this)">↙</div><div class="chip" onclick="setPos('watermark','bc',this)">↓</div><div class="chip" onclick="setPos('watermark','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('watermark',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-watermark"><div class="th"></div></div></div>
-
-        <!-- Upload custom logo — di dalam kartu overlay yang sama -->
-        <div class="sub-lbl" style="margin-top:8px;margin-bottom:4px">Custom Logo</div>
-        <label id="wmUploadBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;
-          padding:6px 10px;border-radius:var(--r);border:1px dashed var(--border2);cursor:pointer;
-          font-size:11px;font-family:var(--fm);color:var(--text2);background:var(--bg);
-          box-sizing:border-box;width:100%;transition:border-color .15s,color .15s"
-          onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-          onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">
-          <input type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
-                 id="wmImageInput" onchange="loadCustomWatermark(this)" style="display:none">
-          📷 Upload PNG / JPG Logo
-        </label>
-        <div id="wmLoaded" style="display:none;flex-direction:column;gap:4px;margin-top:4px">
-          <div style="display:flex;align-items:center;justify-content:space-between;
-                      background:var(--bg);border:1px solid var(--border2);border-radius:6px;
-                      padding:4px 8px;gap:6px">
-            <span id="wmFileName" style="font-size:10px;color:var(--accent);font-family:var(--fm);
-                  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">—</span>
-            <button onclick="clearCustomWatermark()"
-              style="font-size:10px;color:var(--danger);background:none;border:none;
-                     cursor:pointer;font-family:var(--fm);padding:0;flex-shrink:0">✕ Remove</button>
-          </div>
-          <div class="sr">
-            <div class="sm"><span class="sl" style="font-size:10px">Opacity</span><span class="sv" id="wmOpacityVal">100%</span></div>
-            <input type="range" id="wm-opacity-slider" min="10" max="100" value="100" step="5"
-                   oninput="setWmOpacity(this.value)" style="width:100%;margin-top:2px">
-          </div>
-        </div>
-        <div style="font-size:10px;color:var(--text3);font-family:var(--fm);margin-top:5px;line-height:1.5">
-          PNG transparent recommended. Without upload, shows "GPXGreenscreen" text.
-        </div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--fm);margin-top:4px">Show GPX-GreenScreen text</div>
       </div>
     </div>
 

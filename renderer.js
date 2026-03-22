@@ -2,21 +2,6 @@
 // PREVIEW BACKGROUND IMAGE RENDERER
 // ═══════════════════════════════════════════════════════════
 
-function drawPreviewBgImage(ctx, img, fit, W, H){
-  const iw=img.naturalWidth, ih=img.naturalHeight;
-  if(!iw||!ih) return;
-  const scaleX=W/iw, scaleY=H/ih;
-  ctx.save();
-  switch(fit){
-    case 'fit': { const s=Math.min(scaleX,scaleY); const dw=iw*s,dh=ih*s; ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); ctx.drawImage(img,0,0,iw,ih,(W-dw)/2,(H-dh)/2,dw,dh); break; }
-    case 'fill': { const s=Math.max(scaleX,scaleY); const dw=iw*s,dh=ih*s; ctx.drawImage(img,0,0,iw,ih,(W-dw)/2,(H-dh)/2,dw,dh); break; }
-    case 'stretch': ctx.drawImage(img,0,0,iw,ih,0,0,W,H); break;
-    case 'center': ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); ctx.drawImage(img,(W-iw)/2,(H-ih)/2); break;
-    case 'span': { const s=Math.max(scaleX,scaleY); ctx.drawImage(img,0,0,iw,ih,0,0,iw*s,ih*s); break; }
-    default: ctx.drawImage(img,0,0,iw,ih,0,0,W,H);
-  }
-  ctx.restore();
-}
 
 // ═══════════════════════════════════════════════════════════
 // PREVIEW BACKGROUND IMAGE RENDERER

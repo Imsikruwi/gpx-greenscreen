@@ -8,7 +8,6 @@ function checkBg(key) {
   if(overlayBg[key] !== undefined) return overlayBg[key];
   return showOverlayBg;
 }
-
 // HR Zone color berdasarkan % max BPM
 function hrZoneColor(hr){
   if(hr==null||isNaN(hr)) return textColor;
@@ -19,6 +18,28 @@ function hrZoneColor(hr){
   if(pct<0.90) return '#f0a04a';
   return '#ff4444';
 }
+
+// Hitung threshold spdProg (0-1) untuk kuning dan merah
+// bekerja di kedua mode: pct (% of max) dan speed (fixed m/s)
+function dialThresholds(maxSpd_ms){
+  if(dialInputMode==='speed'){
+    return {
+      yellow: maxSpd_ms>0 ? Math.min(1, dialYellowMs/maxSpd_ms) : 0.6,
+      red:    maxSpd_ms>0 ? Math.min(1, dialRedMs/maxSpd_ms)    : 0.85,
+    };
+  }
+  return { yellow: dialYellowPct/100, red: dialRedPct/100 };
+}
+
+// Warna arc berdasarkan posisi prog vs threshold
+function dialArcSolidColor(prog, maxSpd_ms){
+  if(!dialMode) return null;
+  const t = dialThresholds(maxSpd_ms);
+  if(prog >= t.red)    return '#ff3a2a';
+  if(prog >= t.yellow) return '#f0a020';
+  return null;
+}
+
 
 
 // Base function to draw scrolling Odometer digits
@@ -240,7 +261,11 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
     }
     for(let t=0;t<=60;t++){ const a=startA+(t/60)*sweepA; const isMaj=t%10===0; ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*(R-Math.round(fs)),cy+Math.sin(a)*(R-Math.round(fs))); ctx.lineTo(cx+Math.cos(a)*(R-Math.round((isMaj?14:8)*fs)),cy+Math.sin(a)*(R-Math.round((isMaj?14:8)*fs))); ctx.strokeStyle=isMaj?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.2)'; ctx.lineWidth=isMaj?Math.round(2*fs):Math.round(fs);ctx.stroke(); }
     const rArc=R-Math.round(22*fs); ctx.beginPath();ctx.arc(cx,cy,rArc,startA,startA+sweepA); ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=Math.round(10*fs);ctx.lineCap='round';ctx.stroke();
-    if(spdProg>0.005){ ctx.beginPath();ctx.arc(cx,cy,rArc,startA,needleA); ctx.strokeStyle=textColor;ctx.lineWidth=Math.round(10*fs);ctx.lineCap='round';ctx.stroke(); }
+    if(spdProg>0.005){
+      const _dialCol=dialArcSolidColor(spdProg,maxSpd);
+      ctx.beginPath();ctx.arc(cx,cy,rArc,startA,needleA);
+      ctx.strokeStyle=_dialCol||textColor;ctx.lineWidth=Math.round(10*fs);ctx.lineCap='round';ctx.stroke();
+    }
     ctx.beginPath();ctx.arc(cx,cy,rArc-Math.round(16*fs),0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=Math.round(1.5*fs);ctx.stroke();
     const ndx=cx+Math.cos(needleA)*rArc, ndy=cy+Math.sin(needleA)*rArc; ctx.beginPath();ctx.arc(ndx,ndy,Math.round(9*fs),0,Math.PI*2);ctx.fillStyle='rgba(255,60,40,0.3)';ctx.fill(); ctx.beginPath();ctx.arc(ndx,ndy,Math.round(5*fs),0,Math.PI*2);ctx.fillStyle='#ff3a2a';ctx.fill(); ctx.beginPath();ctx.arc(ndx,ndy,Math.round(2.5*fs),0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
     ctx.font=`bold ${Math.round(58*fs)}px ${ovFont()}`; ctx.textAlign='center';ctx.textBaseline='middle'; ctx.fillStyle=textColor;ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=Math.round(10*fs); ctx.fillText(fmtSpd(spd),cx,cy-Math.round(8*fs));ctx.shadowBlur=0;
@@ -256,7 +281,11 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
     const gcx=px+gaugeR+Math.round(10*fs), gcy=py+gcyRel; const sweepStart=Math.PI*(5/6), sweepEnd=Math.PI*(5/6+4/3), sweepRange=sweepEnd-sweepStart; const needleA=sweepStart+spdProg*sweepRange;
     for(let t=0;t<=32;t++){ const a=sweepStart+(t/32)*sweepRange; const isMaj=t%8===0, isMed=t%4===0; const r2=gaugeR-(isMaj?Math.round(8*fs):isMed?Math.round(5*fs):Math.round(3*fs)); ctx.beginPath(); ctx.moveTo(gcx+Math.cos(a)*gaugeR,gcy+Math.sin(a)*gaugeR); ctx.lineTo(gcx+Math.cos(a)*r2,gcy+Math.sin(a)*r2); ctx.strokeStyle=isMaj?'rgba(255,255,255,0.7)':isMed?'rgba(255,255,255,0.35)':'rgba(255,255,255,0.15)'; ctx.lineWidth=isMaj?Math.round(1.8*fs):Math.round(0.8*fs);ctx.stroke(); }
     const rArc=gaugeR-Math.round(11*fs); ctx.beginPath();ctx.arc(gcx,gcy,rArc,sweepStart,sweepEnd); ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=Math.round(4*fs);ctx.lineCap='butt';ctx.stroke();
-    if(spdProg>0.005){ ctx.beginPath();ctx.arc(gcx,gcy,rArc,sweepStart,needleA); ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=Math.round(4*fs);ctx.lineCap='butt';ctx.stroke(); }
+    if(spdProg>0.005){
+      const _dialCol2=dialArcSolidColor(spdProg,maxSpd);
+      ctx.beginPath();ctx.arc(gcx,gcy,rArc,sweepStart,needleA);
+      ctx.strokeStyle=_dialCol2||'rgba(255,255,255,0.4)';ctx.lineWidth=Math.round(4*fs);ctx.lineCap='butt';ctx.stroke();
+    }
     ctx.save();ctx.translate(gcx,gcy);ctx.rotate(needleA); ctx.shadowColor='rgba(255,255,255,0.3)';ctx.shadowBlur=Math.round(4*fs); ctx.beginPath();ctx.moveTo(-Math.round(5*fs),0);ctx.lineTo(gaugeR-Math.round(6*fs),0); ctx.strokeStyle=textColor;ctx.lineWidth=Math.round(1.8*fs);ctx.lineCap='round';ctx.stroke(); ctx.shadowBlur=0;ctx.restore();
     ctx.beginPath();ctx.arc(gcx,gcy,Math.round(5*fs),0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fill(); ctx.beginPath();ctx.arc(gcx,gcy,Math.round(3*fs),0,Math.PI*2);ctx.fillStyle=textColor;ctx.fill(); ctx.beginPath();ctx.arc(gcx,gcy,Math.round(1.5*fs),0,Math.PI*2);ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fill();
     const maxV=Math.round(cvtSpd(maxSpd)); const labelStep=maxV<=80?20:maxV<=160?40:maxV<=240?60:80; ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.35)';ctx.textAlign='center';ctx.textBaseline='middle';
@@ -291,7 +320,11 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
     const gcx = px + gaugeR + Math.round(8*fs); const gcy = py + panH - gcyPadH - gaugeR; const sweepStart = Math.PI*(5/6), sweepEnd = Math.PI*(5/6+4/3); const sweepRange = sweepEnd - sweepStart; const needleA = sweepStart + spdProg*sweepRange;
     const nTick=32; for(let t=0;t<=nTick;t++){ const a=sweepStart+(t/nTick)*sweepRange; const isMaj=t%8===0, isMed=t%4===0; const r1=gaugeR, r2=gaugeR-(isMaj?Math.round(7*fs):isMed?Math.round(4*fs):Math.round(2.5*fs)); ctx.beginPath(); ctx.moveTo(gcx+Math.cos(a)*r1,gcy+Math.sin(a)*r1); ctx.lineTo(gcx+Math.cos(a)*r2,gcy+Math.sin(a)*r2); ctx.strokeStyle=isMaj?'rgba(255,255,255,0.65)':isMed?'rgba(255,255,255,0.3)':'rgba(255,255,255,0.15)'; ctx.lineWidth=isMaj?Math.round(1.5*fs):Math.round(0.8*fs); ctx.stroke(); }
     const rArc=gaugeR-Math.round(10*fs); ctx.beginPath();ctx.arc(gcx,gcy,rArc,sweepStart,sweepEnd); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=Math.round(3.5*fs);ctx.lineCap='butt';ctx.stroke();
-    if(spdProg>0.005){ ctx.beginPath();ctx.arc(gcx,gcy,rArc,sweepStart,needleA); ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=Math.round(3.5*fs);ctx.lineCap='butt';ctx.stroke(); }
+    if(spdProg>0.005){
+      const _dialCol3=dialArcSolidColor(spdProg,maxSpd);
+      ctx.beginPath();ctx.arc(gcx,gcy,rArc,sweepStart,needleA);
+      ctx.strokeStyle=_dialCol3||'rgba(255,255,255,0.5)';ctx.lineWidth=Math.round(3.5*fs);ctx.lineCap='butt';ctx.stroke();
+    }
     ctx.save(); ctx.translate(gcx,gcy);ctx.rotate(needleA); ctx.shadowColor='rgba(255,255,255,0.4)';ctx.shadowBlur=Math.round(4*fs); ctx.beginPath(); ctx.moveTo(-Math.round(4*fs),0); ctx.lineTo(gaugeR-Math.round(5*fs),0); ctx.strokeStyle='#ffffff';ctx.lineWidth=Math.round(1.5*fs);ctx.lineCap='round';ctx.stroke(); ctx.shadowBlur=0; ctx.restore();
     ctx.beginPath();ctx.arc(gcx,gcy,Math.round(4*fs),0,Math.PI*2); ctx.fillStyle='rgba(10,10,10,1)';ctx.fill(); ctx.beginPath();ctx.arc(gcx,gcy,Math.round(2.5*fs),0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.85)';ctx.fill();
     const maxV=Math.round(cvtSpd(maxSpd)); const labelStep=maxV<=80?20:maxV<=160?40:maxV<=240?60:80; ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.35)';ctx.textAlign='center';ctx.textBaseline='middle'; for(let v=0;v<=maxV;v+=labelStep){ const a=sweepStart+(v/maxV)*sweepRange; const lr=gaugeR-Math.round(16*fs); ctx.fillText(String(v),gcx+Math.cos(a)*lr,gcy+Math.sin(a)*lr); }
@@ -515,15 +548,6 @@ function drawOdometerOverlay(ctx, pt, W, H) {
   ctx.restore();
 }
 
-function hrZoneColor(hr){
-  if(hr==null||isNaN(hr)) return textColor;
-  const pct=hr/(hrMaxBpm||190);
-  if(pct<0.60) return '#4a9ef0';
-  if(pct<0.70) return '#4af0a0';
-  if(pct<0.80) return '#f0d04a';
-  if(pct<0.90) return '#f0a04a';
-  return '#ff4444';
-}
 
 function drawHeartrateOverlay(ctx, pt, W, H) {
   const fs=ovFS('heartrate'); const bgOn = checkBg('heartrate'); const hr = pt.hr; const zColor = hrZoneColor(hr); const panW=Math.round(160*fs), panH=Math.round(56*fs); const{x:hx,y:hy}=posXY(oPos.heartrate,W,H,panW,panH); 
@@ -566,41 +590,40 @@ function drawProgOverlay(ctx, W, H, prog) {
   ctx.restore();
 }
 
+// Ensure Watermark function is here (Outside other functions)
 function drawWatermarkOverlay(ctx, W, H) {
-  const fs = ovFS('watermark');
+  const fs = ovFS('watermark'); 
+  const text = "GPXGreenscreen";
+  
   ctx.save();
-
-  if(customWatermarkImage){
-    // Mode custom image
-    const img = customWatermarkImage;
-    const iw = img.naturalWidth, ih = img.naturalHeight;
-    if(iw && ih){
-      // Skala proporsional: tinggi maksimal 60px * fs
-      const maxH = Math.round(60*fs);
-      const scale = maxH / ih;
-      const dw = Math.round(iw*scale), dh = maxH;
-      const {x,y} = posXY(oPos.watermark, W, H, dw, dh);
-      ctx.globalAlpha = customWatermarkOpacity;
-      ctx.shadowColor = 'rgba(0,0,0,0.4)';
-      ctx.shadowBlur = Math.round(4*fs);
-      ctx.drawImage(img, x, y, dw, dh);
-    }
-  } else {
-    // Mode teks default "GPXGreenscreen"
-    const text = "GPXGreenscreen";
-    ctx.font = `800 ${Math.round(24*fs)}px 'Syne', sans-serif`;
-    if('letterSpacing' in ctx) ctx.letterSpacing = `-${Math.round(0.8*fs)}px`;
-    const boxW = ctx.measureText(text).width;
-    const boxH = Math.round(26*fs);
-    const {x,y} = posXY(oPos.watermark, W, H, boxW, boxH);
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-    ctx.shadowBlur = Math.round(6*fs);
-    ctx.shadowOffsetY = Math.round(2*fs);
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(text, x, y);
+  
+  // 1. Font disamakan dengan header: Syne, tebal (800), ukuran proporsional (24px)
+  ctx.font = `800 ${Math.round(24*fs)}px 'Syne', sans-serif`; 
+  
+  // Rapatkan jarak huruf agar identik dengan logo di header (jika browser mendukung)
+  if ('letterSpacing' in ctx) {
+    ctx.letterSpacing = `-${Math.round(0.8 * fs)}px`;
   }
 
+  // Hitung ukuran aktual dari teks
+  const boxW = ctx.measureText(text).width;
+  const boxH = Math.round(26*fs); 
+
+  const {x, y} = posXY(oPos.watermark, W, H, boxW, boxH);
+
+  // 2. Warna font putih murni, tanpa background kotak & tanpa titik
+  ctx.fillStyle = '#ffffff'; 
+  
+  // 3. Beri drop shadow tipis agar tetap terbaca jika background video terang
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = Math.round(6*fs);
+  ctx.shadowOffsetY = Math.round(2*fs);
+
+  ctx.textAlign = 'left'; 
+  ctx.textBaseline = 'top';
+  
+  // 4. Gambar teksnya
+  ctx.fillText(text, x, y);
+  
   ctx.restore();
 }

@@ -1,7 +1,6 @@
 # ⬡ GPX-GreenScreen (Beta)
 
-[GPX Greenscreen](https://imsikruwi.github.io/gpx-greenscreen)
-**GPX-GreenScreen** is a high-performance, browser-based tool designed to transform your GPX tracks into animated video overlays. Perfect for cycling, running, or automotive videos, it allows you to visualize telemetry data with professional-grade precision.
+[GPX Greenscreen](https://imsikruwi.github.io/gpx-greenscreen) is a high-performance, browser-based tool designed to transform your GPX tracks into animated video overlays. Perfect for cycling, running, or automotive videos, it allows you to visualize telemetry data with professional-grade precision.
 
 ---
 

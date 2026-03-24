@@ -311,6 +311,17 @@ function toggleDistOdo(row){ distOdoMode=!distOdoMode; const t=document.getEleme
 function toggleOdoBorder(row){ odoShowBorder=!odoShowBorder; const t=document.getElementById('tog-odoborder'); if(t)t.classList.toggle('on',odoShowBorder); drawFrame(curFrame); }
 function setOdoScale2(v){ odoScale2=parseInt(v)/100; document.getElementById('odoScaleVal2').textContent=odoScale2.toFixed(1)+'×'; drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
 function setCompassStyle(style,el){ window._compassStyle=style; if(el&&el.closest('.chips')){ el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setHRStyle(style,el){ window._hrStyle=style; document.querySelectorAll('[id^="hr-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('hr-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setPowerStyle(style,el){ window._powerStyle=style; document.querySelectorAll('[id^="power-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('power-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setInfoStyle(style,el){ window._infoStyle=style; document.querySelectorAll('[id^="info-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('info-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setElevStyle(style,el){ window._elevStyle=style; document.querySelectorAll('[id^="elev-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('elev-style-'+style)?.classList.add('on'); drawFrame(curFrame); }
+function setGpsTimeStyle(style,el){ window._gpsTimeStyle=style; document.querySelectorAll('[id^="gpstime-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('gpstime-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setCoordStyle(style,el){ window._coordStyle=style; document.querySelectorAll('[id^="coord-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('coord-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setCadStyle(style,el){ window._cadStyle=style; document.querySelectorAll('[id^="cad-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('cad-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setArcStyle(style,el){ window._arcStyle=style; document.querySelectorAll('[id^="arc-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('arc-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setDistStyle(style,el){ window._distStyle=style; document.querySelectorAll('[id^="dist-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('dist-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setAltStyle(style,el){ window._altStyle=style; document.querySelectorAll('[id^="alt-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('alt-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
+function setGradeStyle(style,el){ window._gradeStyle=style; document.querySelectorAll('[id^="grade-style-"]').forEach(b=>b.classList.remove('on')); document.getElementById('grade-style-'+style)?.classList.add('on'); drawFrame(curFrame); if(window._dragHandle) window._dragHandle.updateHandles(); }
 function handleLandingFile(input){ if(input.files&&input.files[0]){ const mainInput=document.getElementById('fileInput'); const file=input.files[0]; const reader=new FileReader(); reader.onload=e=>{try{parseGPX(e.target.result,file.name)}catch(err){notif('Parse error: '+err.message,'#ff5c5c')}}; reader.readAsText(file); } }
 function showMainApp(){ const lp=document.getElementById('landingPage'); if(lp){lp.style.opacity='0';lp.style.transition='opacity .3s';setTimeout(()=>lp.style.display='none',300);} const bell=document.getElementById('notifBellBtn'); if(bell) bell.style.display='flex'; }
 function savePreset(){
@@ -376,6 +387,17 @@ function savePreset(){
         // ── G-Force / Compass ──
         gforceScale: window._gforceScale||1,
         compassStyle: window._compassStyle||'rose',
+        hrStyle: window._hrStyle||'standard',
+        powerStyle: window._powerStyle||'standard',
+        infoStyle: window._infoStyle||'list',
+        elevStyle: window._elevStyle||'line',
+        gpsTimeStyle: window._gpsTimeStyle||'standard',
+        coordStyle: window._coordStyle||'standard',
+        cadStyle: window._cadStyle||'standard',
+        arcStyle: window._arcStyle||'ring',
+        gradeStyle: window._gradeStyle||'bar',
+        distStyle: window._distStyle||'panel',
+        altStyle: window._altStyle||'panel',
 
         // ── Dial appearance ──
         dialMode, dialInputMode, dialYellowPct, dialRedPct, dialYellowMs, dialRedMs,
@@ -498,6 +520,17 @@ function applyPreset(p){
     // ── G-Force / Compass ──
     if(p.gforceScale!=null)  window._gforceScale  = p.gforceScale;
     if(p.compassStyle)       window._compassStyle = p.compassStyle;
+    if(p.hrStyle)            setHRStyle(p.hrStyle, null);
+    if(p.powerStyle)         setPowerStyle(p.powerStyle, null);
+    if(p.infoStyle)          setInfoStyle(p.infoStyle, null);
+    if(p.elevStyle)          setElevStyle(p.elevStyle, null);
+    if(p.gpsTimeStyle)       setGpsTimeStyle(p.gpsTimeStyle, null);
+    if(p.coordStyle)         setCoordStyle(p.coordStyle, null);
+    if(p.cadStyle)           setCadStyle(p.cadStyle, null);
+    if(p.arcStyle)           setArcStyle(p.arcStyle, null);
+    if(p.gradeStyle)         setGradeStyle(p.gradeStyle, null);
+    if(p.distStyle)          setDistStyle(p.distStyle, null);
+    if(p.altStyle)           setAltStyle(p.altStyle, null);
     if(p.dialMode!=null){
       dialMode = p.dialMode;
       document.getElementById('tog-dial-mode')?.classList.toggle('on', dialMode);
@@ -666,6 +699,30 @@ function applyPreset(p){
     document.querySelectorAll('[id^="compass-style-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('compass-style-'+(window._compassStyle||'rose'))?.classList.add('on');
 
+    // New overlay style chips
+    document.querySelectorAll('[id^="dist-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('dist-style-'+(window._distStyle||'panel'))?.classList.add('on');
+    document.querySelectorAll('[id^="alt-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('alt-style-'+(window._altStyle||'panel'))?.classList.add('on');
+    document.querySelectorAll('[id^="arc-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('arc-style-'+(window._arcStyle||'ring'))?.classList.add('on');
+    document.querySelectorAll('[id^="grade-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('grade-style-'+(window._gradeStyle||'bar'))?.classList.add('on');
+    document.querySelectorAll('[id^="hr-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('hr-style-'+(window._hrStyle||'standard'))?.classList.add('on');
+    document.querySelectorAll('[id^="power-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('power-style-'+(window._powerStyle||'standard'))?.classList.add('on');
+    document.querySelectorAll('[id^="info-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('info-style-'+(window._infoStyle||'list'))?.classList.add('on');
+    document.querySelectorAll('[id^="elev-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('elev-style-'+(window._elevStyle||'line'))?.classList.add('on');
+    document.querySelectorAll('[id^="gpstime-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('gpstime-style-'+(window._gpsTimeStyle||'standard'))?.classList.add('on');
+    document.querySelectorAll('[id^="coord-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('coord-style-'+(window._coordStyle||'standard'))?.classList.add('on');
+    document.querySelectorAll('[id^="cad-style-"]').forEach(b=>b.classList.remove('on'));
+    document.getElementById('cad-style-'+(window._cadStyle||'standard'))?.classList.add('on');
+
     // HR max slider
     const hrSlider = document.getElementById('hr-slider');
     if(hrSlider){ hrSlider.value = hrMaxBpm; document.getElementById('hrMaxVal').textContent = hrMaxBpm+' bpm'; }
@@ -809,7 +866,7 @@ function toggleOverlayBg(key,row){
 }
 function setOp(v){ panelOp=parseInt(v)/100; document.getElementById('opVal').textContent=v+'%'; drawFrame(curFrame); }
 function confirmDialog(title, msg, onConfirm){ const bd=document.createElement('div'); bd.className='confirm-backdrop'; bd.innerHTML=`<div class="confirm-box"><div class="confirm-title">${title}</div><div class="confirm-msg">${msg}</div><div class="confirm-btns"><button class="bs" onclick="this.closest('.confirm-backdrop').remove()">Cancel</button><button class="bp" id="confirm-ok" style="padding:7px 18px">Confirm</button></div></div>`; document.body.appendChild(bd); bd.querySelector('#confirm-ok').onclick=()=>{ bd.remove(); onConfirm(); }; bd.addEventListener('click',e=>{ if(e.target===bd)bd.remove(); }); }
-function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'], ['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); setOverlayFont('mono', null);
+function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,distance:false,altitude:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',distance:'bc',altitude:'tc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'],['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); setOverlayFont('mono', null); setHRStyle('standard',null); setPowerStyle('standard',null); setInfoStyle('list',null); setElevStyle('line',null); setGpsTimeStyle('standard',null); setCoordStyle('standard',null); setCadStyle('standard',null); setArcStyle('ring',null); setGradeStyle('bar',null); setDistStyle('panel',null); setAltStyle('panel',null);
 document.getElementById('tog-mapnorth').classList.remove('on'); // Reset status global overlay BG ke OFF
       showOverlayBg = false;
       document.getElementById('tog-global-bg')?.classList.remove('on');

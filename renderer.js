@@ -2,11 +2,6 @@
 // PREVIEW BACKGROUND IMAGE RENDERER
 // ═══════════════════════════════════════════════════════════
 
-
-// ═══════════════════════════════════════════════════════════
-// PREVIEW BACKGROUND IMAGE RENDERER
-// ═══════════════════════════════════════════════════════════
-
 function drawPreviewBgImage(ctx, img, fit, W, H){
   const iw=img.naturalWidth, ih=img.naturalHeight;
   if(!iw||!ih) return;
@@ -69,10 +64,8 @@ function drawFrameWithPt(n, pt){
   const tfLen = tfE0 - tfS0 || 1; 
   const prog = (n - tfS0) / tfLen;
 
-  // Clear canvas
   ctx.clearRect(0,0,W,H);
 
-  // Background: image atau solid color
   const _useBgImg = previewBgImage && previewBgEnabled &&
                     (previewBgIncludeExport || !isRendering);
   if(_useBgImg){
@@ -82,7 +75,6 @@ function drawFrameWithPt(n, pt){
     ctx.fillRect(0,0,W,H);
   }
 
-  // Router Pemanggil Overlay
   if(opts.map)       drawMapOverlay(ctx, pt, points, n, W, H);
   if(opts.speed)     drawSpeedOverlay(ctx, pt, n, W, H);
   if(opts.info)      drawInfoOverlay(ctx, pt, n, W, H);
@@ -94,9 +86,17 @@ function drawFrameWithPt(n, pt){
   if(opts.compass)   drawCompassOverlay(ctx, pt, W, H);
   if(opts.grade)     drawGradeOverlay(ctx, pt, W, H);
   if(opts.odometer)  drawOdometerOverlay(ctx, pt, W, H);
-  if(opts.heartrate) drawHeartrateOverlay(ctx, pt, W, H);
+  if(opts.distance)  drawDistanceOverlay(ctx, pt, W, H);
+  if(opts.altitude)  drawAltitudeOverlay(ctx, pt, W, H);
+  if(opts.heartrate){
+    if(window._hrStyle==='wave') drawHeartrateWaveOverlay(ctx, pt, n, W, H);
+    else drawHeartrateOverlay(ctx, pt, W, H);
+  }
   if(opts.cadence)   drawCadenceOverlay(ctx, pt, W, H);
-  if(opts.power)     drawPowerOverlay(ctx, pt, W, H);
+  if(opts.power){
+    if(window._powerStyle==='arc') drawPowerArcOverlay(ctx, pt, W, H);
+    else drawPowerOverlay(ctx, pt, W, H);
+  }
   if(opts.prog)      drawProgOverlay(ctx, W, H, prog);
   if(opts.watermark) drawWatermarkOverlay(ctx, W, H);
 }

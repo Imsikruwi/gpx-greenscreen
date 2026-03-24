@@ -39,12 +39,35 @@ function getOverlayBounds(key){
         const distH=opts.distov?Math.round(26*fs):0;
         w=Math.round(barW+80*fs); h=barH+Math.round(16*fs)+distH;
       } else if(spdStyle==='hbar'){
-        // horizontal bar
         const barH=Math.round(12*fs), barW=Math.round(180*fs);
         const distH=opts.distov?Math.round(26*fs):0;
         w=barW+Math.round(16*fs); h=Math.round(barH+68*fs)+distH;
+      } else if(spdStyle==='donut'){
+        const R=Math.round(62*fs); const sz=R*2+Math.round(16*fs);
+        const stripH=opts.distov?Math.round(28*fs):0;
+        w=sz; h=sz+stripH;
+      } else if(spdStyle==='segmented'){
+        const R=Math.round(60*fs); const sz=R*2+Math.round(16*fs);
+        const stripH=opts.distov?Math.round(28*fs):0;
+        w=sz; h=sz+stripH;
+      } else if(spdStyle==='neon'){
+        const R=Math.round(58*fs); const sz=R*2+Math.round(20*fs);
+        const stripH=opts.distov?Math.round(28*fs):0;
+        w=sz; h=sz+stripH;
+      } else if(spdStyle==='revled'){
+        const nLed=16; const ledW=Math.round(14*fs); const ledGap=Math.round(3*fs);
+        const stripW=nLed*(ledW+ledGap)-ledGap;
+        const distH=opts.distov?Math.round(26*fs):0;
+        w=stripW+Math.round(16*fs); h=Math.round(26*fs+52*fs)+distH;
+      } else if(spdStyle==='minihud'){
+        const numF=Math.round(44*fs); const lblF=Math.round(9*fs);
+        const distH=opts.distov?Math.round(22*fs):0;
+        w=Math.round(160*fs); h=Math.round(numF+lblF*2+18*fs)+distH;
+      } else if(spdStyle==='digital'){
+        const numF=Math.round(52*fs); const lblF=Math.round(9*fs);
+        const distH=opts.distov?Math.round(22*fs):0;
+        w=Math.round(180*fs); h=Math.round(numF+lblF+22*fs)+distH;
       } else {
-        // fallback sama dengan bar
         const gaugeR=Math.round(32*fs); const gcyPad=Math.round(8*fs); const topPad=Math.round(8*fs);
         w=Math.round(gaugeR*2+108*fs); h=topPad+gaugeR*2+gcyPad;
       }
@@ -58,34 +81,61 @@ function getOverlayBounds(key){
     }
 
     case 'info': {
-      w=Math.round(210*fs); h=Math.round(118*fs);
+      const iStyle=window._infoStyle||'list';
+      if(iStyle==='hrow'){ w=Math.round(360*fs); h=Math.round(48*fs); }
+      else if(iStyle==='stacked'){ w=Math.round(248*fs); h=Math.round(96*fs); }
+      else { w=Math.round(210*fs); h=Math.round(118*fs); }
       break;
     }
 
     case 'arc': {
-      w=Math.round(108*fs); h=Math.round(108*fs);
+      const aStyle=window._arcStyle||'ring';
+      if(aStyle==='hbar'){ w=Math.round(200*fs); h=Math.round(38*fs); }
+      else if(aStyle==='steps'){ const nS=10; const dR=Math.round(5*fs); const g=Math.round(8*fs); w=nS*(dR*2+g)-g+Math.round(16*fs); h=dR*2+Math.round(20*fs); }
+      else { w=Math.round(108*fs); h=Math.round(108*fs); }
       break;
     }
 
     case 'gpstime': {
-      // Mirror drawGpsTimeOverlay: lebar dari measureText + padding, tinggi tergantung gpsShowDate
-      const bigF=Math.round(30*fs);
+      const tStyle=window._gpsTimeStyle||'standard';
       const _mc=document.createElement('canvas').getContext('2d');
-      _mc.font=`bold ${bigF}px ${ovFont()}`;
-      // Estimasi teks waktu terpanjang: "23:59:59"
-      const tw=_mc.measureText('23:59:59').width;
-      w=Math.max(tw+Math.round(28*fs), Math.round(180*fs));
-      h=gpsShowDate ? Math.round(58*fs) : Math.round(42*fs);
+      if(tStyle==='minimal'){
+        const bigF=Math.round(26*fs); _mc.font=`bold ${bigF}px ${ovFont()}`;
+        const tw=_mc.measureText('23:59:59').width;
+        w=Math.max(tw+Math.round(16*fs), Math.round(120*fs));
+        h=gpsShowDate?Math.round(52*fs):Math.round(36*fs);
+      } else if(tStyle==='pill'){
+        const bigF=Math.round(22*fs); _mc.font=`bold ${bigF}px ${ovFont()}`;
+        const tw=_mc.measureText('23:59:59').width;
+        w=Math.round(34*fs)+tw+Math.round(28*fs); h=Math.round(38*fs);
+      } else {
+        const bigF=Math.round(30*fs); _mc.font=`bold ${bigF}px ${ovFont()}`;
+        const tw=_mc.measureText('23:59:59').width;
+        w=Math.max(tw+Math.round(28*fs), Math.round(180*fs));
+        h=gpsShowDate ? Math.round(58*fs) : Math.round(42*fs);
+      }
       break;
     }
 
     case 'coords': {
-      const lineF=Math.round(15*fs); const lineGap=Math.round(4*fs);
-      const pad=Math.round(12*fs); const iconW=coordShowIcon?Math.round(26*fs):0;
-      const charW=lineF*0.62;
-      const estTextW=coordFmt==='dms'?Math.round(charW*15):Math.round(charW*11);
-      w=iconW+estTextW+pad*2+(iconW>0?Math.round(6*fs):0);
-      h=lineF*2+lineGap+pad*2;
+      const cStyle=window._coordStyle||'standard';
+      if(cStyle==='compact'){
+        const lineF=Math.round(11*fs); const pad=Math.round(8*fs); const lineGap=Math.round(3*fs);
+        const charW=lineF*0.62;
+        const estW=coordFmt==='dms'?Math.round(charW*15):Math.round(charW*11);
+        w=estW+pad*2; h=lineF*2+lineGap+pad*2;
+      } else if(cStyle==='badge'){
+        const lineF=Math.round(12*fs); const pad=Math.round(9*fs); const lblF=Math.round(7*fs);
+        const charW=lineF*0.62; const estW=coordFmt==='dms'?Math.round(charW*15):Math.round(charW*11);
+        w=lblF*4+estW+pad*2; h=Math.round(26*fs)*2+Math.round(4*fs);
+      } else {
+        const lineF=Math.round(15*fs); const lineGap=Math.round(4*fs);
+        const pad=Math.round(12*fs); const iconW=coordShowIcon?Math.round(26*fs):0;
+        const charW=lineF*0.62;
+        const estTextW=coordFmt==='dms'?Math.round(charW*15):Math.round(charW*11);
+        w=iconW+estTextW+pad*2+(iconW>0?Math.round(6*fs):0);
+        h=lineF*2+lineGap+pad*2;
+      }
       break;
     }
 
@@ -107,6 +157,10 @@ function getOverlayBounds(key){
     case 'compass': {
       if(window._compassStyle==='bar'){
         w=Math.round(200*fs); h=Math.round(44*fs);
+      } else if(window._compassStyle==='arrow'){
+        w=Math.round(80*fs); h=Math.round(80*fs);
+      } else if(window._compassStyle==='digital'){
+        w=Math.round(140*fs); h=Math.round(56*fs);
       } else {
         const R=Math.round(52*fs); const sz2=R*2+Math.round(12*fs);
         w=sz2; h=sz2;
@@ -115,7 +169,14 @@ function getOverlayBounds(key){
     }
 
     case 'grade': {
-      w=Math.round(140*fs); h=Math.round(52*fs);
+      const gStyle=window._gradeStyle||'bar';
+      if(gStyle==='arc'){
+        const R=Math.round(46*fs); w=R*2+Math.round(12*fs); h=Math.round(R+Math.round(30*fs));
+      } else if(gStyle==='road'){
+        w=Math.round(120*fs); h=Math.round(70*fs);
+      } else {
+        w=Math.round(140*fs); h=Math.round(52*fs);
+      }
       break;
     }
 
@@ -134,13 +195,42 @@ function getOverlayBounds(key){
       break;
     }
 
+    case 'distance': {
+      const dStyle=window._distStyle||'panel';
+      if(dStyle==='odo'){
+        const dW=Math.round(12*fs); const scaledW=Math.round(dW*odoScale);
+        const dH=Math.round(18*fs); const scaledH=Math.round(dH*odoScale);
+        const pad2=Math.round(2*fs); const dotW=Math.round(scaledW*0.45);
+        const drumsTotalW=3*(scaledW+pad2)+(scaledW+pad2)+dotW+pad2;
+        w=Math.round(30*fs)+drumsTotalW+Math.round(28*fs)+Math.round(12*fs);
+        h=scaledH+Math.round(14*fs);
+      } else {
+        w=Math.round(140*fs); h=Math.round(42*fs);
+      }
+      break;
+    }
+
+    case 'altitude': {
+      const aStyle=window._altStyle||'panel';
+      if(aStyle==='gauge'){
+        const R=Math.round(44*fs); const sz=R*2+Math.round(12*fs);
+        w=sz; h=sz;
+      } else {
+        w=Math.round(140*fs); h=Math.round(42*fs);
+      }
+      break;
+    }
+
     case 'heartrate': {
       w=Math.round(160*fs); h=Math.round(56*fs);
       break;
     }
 
     case 'cadence': {
-      w=Math.round(150*fs); h=Math.round(56*fs);
+      if(window._cadStyle==='ring'){
+        const R=Math.round(36*fs); const sz=R*2+Math.round(12*fs);
+        w=sz; h=sz+Math.round(14*fs);
+      } else { w=Math.round(150*fs); h=Math.round(56*fs); }
       break;
     }
 
@@ -216,7 +306,7 @@ function initDragPos(){
     if(!gpxData) return null;
     // Semua overlay yang valid — termasuk watermark yang tidak ada di opts
     const ALL_KEYS = ['speed','map','info','arc','elev','gpstime','coords','gforce',
-                      'compass','grade','odometer','heartrate','cadence','power','watermark'];
+                      'compass','grade','odometer','distance','altitude','heartrate','cadence','power','watermark'];
     const hits = [];
     for(const key of ALL_KEYS){
       // watermark selalu aktif jika opts.watermark, overlay lain cek opts[key]

@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════════
 
 let gpxData=null, tfS0=0, tfE0=0;
-let opts={speed:true,map:true,info:false,arc:false,prog:false,elev:false,gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,odometer:true,heartrate:false,cadence:false,power:false,watermark:true};
-let oPos={speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc',gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',odometer:'bc',heartrate:'tc',cadence:'tc',power:'tc',watermark:'tc'};
+let opts={speed:true,map:true,info:false,arc:false,prog:false,elev:false,gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,odometer:true,heartrate:false,cadence:false,power:false,watermark:true,distance:false,altitude:false};
+let oPos={speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc',gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',odometer:'bc',heartrate:'tc',cadence:'tc',power:'tc',watermark:'tc',distance:'bc',altitude:'tc'};
 let textColor='#ffffff', bgColor='#00b140', speedUnit='kmh';
 let fontScale=2.2, panelOp=0.3;
 let curFrame=0, playing=false, rafId=null, lastPlayT=0;

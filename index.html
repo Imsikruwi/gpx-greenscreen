@@ -502,7 +502,7 @@
     <div class="oc" id="oc-speed">
       <div class="och">
         <div class="tr" onclick="toggleOpt('speed',this)" style="flex:1;border:none;padding:0;background:none">
-          <span class="tl" style="font-size:12px;font-weight:700;color:var(--text)">🏎 Speed &amp; Distance</span>
+          <span class="tl" style="font-size:12px;font-weight:700;color:var(--text)">🏎 Speedometer</span>
           <span class="oc-arrow">▾</span>
           <div class="tt on" id="tog-speed" style="margin-left:6px"><div class="th"></div></div>
         </div>
@@ -525,10 +525,15 @@
         <div class="sub-lbl">Style</div>
         <div class="chips">
           <button class="chip" id="spd-style-gauge" onclick="setSpdStyle('gauge',this)">Gauge</button>
-          <button class="chip on" id="spd-style-bar" onclick="setSpdStyle('bar',this)">Bar</button>
-          <button class="chip" id="spd-style-hud" onclick="setSpdStyle('hud',this)">HUD</button>
+          <button class="chip on" id="spd-style-bar" onclick="setSpdStyle('bar',this)">HUD</button>
           <button class="chip" id="spd-style-vbar" onclick="setSpdStyle('vbar',this)">▌Vertical</button>
           <button class="chip" id="spd-style-hbar" onclick="setSpdStyle('hbar',this)">━ Horizontal</button>
+          <button class="chip" id="spd-style-donut" onclick="setSpdStyle('donut',this)">◉ Donut</button>
+          <button class="chip" id="spd-style-segmented" onclick="setSpdStyle('segmented',this)">⊙ Segmented</button>
+          <button class="chip" id="spd-style-neon" onclick="setSpdStyle('neon',this)">⬡ Neon</button>
+          <button class="chip" id="spd-style-revled" onclick="setSpdStyle('revled',this)">▮▮▮ Rev LED</button>
+          <button class="chip" id="spd-style-minihud" onclick="setSpdStyle('minihud',this)">▬ Mini HUD</button>
+          <button class="chip" id="spd-style-digital" onclick="setSpdStyle('digital',this)">0:0 Digital</button>
         </div>
 
         <!-- ── DIAL APPEARANCE ── -->
@@ -641,6 +646,61 @@
         </div>
       </div>
     </div>
+    <div class="oc off" id="oc-distance">
+      <div class="och">
+        <div class="tr" onclick="toggleOpt('distance',this)" style="flex:1;border:none;padding:0;background:none">
+          <span class="tl" style="font-size:12px;font-weight:700;color:var(--text)">📏 Distance</span>
+          <span class="oc-arrow">▾</span>
+          <div class="tt" id="tog-distance" style="margin-left:6px"><div class="th"></div></div>
+        </div>
+      </div>
+      <div class="oc-body">
+        <div class="ocp3" style="display:none" id="pos-distance">
+          <div class="chip" onclick="setPos('distance','tl',this)">↖</div>
+          <div class="chip" onclick="setPos('distance','tc',this)">↑</div><div class="chip" onclick="setPos('distance','tr',this)">↗</div>
+          <div class="chip" onclick="setPos('distance','ml',this)">←</div><div class="chip" onclick="setPos('distance','mc',this)">·</div><div class="chip" onclick="setPos('distance','mr',this)">→</div>
+          <div class="chip on" onclick="setPos('distance','bc',this)">↙</div><div class="chip" onclick="setPos('distance','bc',this)">↓</div><div class="chip" onclick="setPos('distance','br',this)">↘</div>
+        </div>
+        <div class="tr" onclick="toggleOverlayBg('distance',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-distance"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Style</div>
+        <div class="chips">
+          <button class="chip on" id="dist-style-panel" onclick="setDistStyle('panel',this)">Panel</button>
+          <button class="chip" id="dist-style-odo" onclick="setDistStyle('odo',this)">🔢 Odometer</button>
+        </div>
+        <div class="sub-lbl" style="margin-top:4px">Decimal Places</div>
+        <div class="chips">
+          <button class="chip" onclick="setDistDec(0,this)">0</button>
+          <button class="chip on" onclick="setDistDec(1,this)">0.0</button>
+          <button class="chip" onclick="setDistDec(2,this)">0.00</button>
+          <button class="chip" onclick="setDistDec(3,this)">0.000</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="oc off" id="oc-altitude">
+      <div class="och">
+        <div class="tr" onclick="toggleOpt('altitude',this)" style="flex:1;border:none;padding:0;background:none">
+          <span class="tl" style="font-size:12px;font-weight:700;color:var(--text)">⛰ Altitude</span>
+          <span class="oc-arrow">▾</span>
+          <div class="tt" id="tog-altitude" style="margin-left:6px"><div class="th"></div></div>
+        </div>
+      </div>
+      <div class="oc-body">
+        <div class="ocp3" style="display:none" id="pos-altitude">
+          <div class="chip" onclick="setPos('altitude','tl',this)">↖</div>
+          <div class="chip" onclick="setPos('altitude','tc',this)">↑</div><div class="chip on" onclick="setPos('altitude','tr',this)">↗</div>
+          <div class="chip" onclick="setPos('altitude','ml',this)">←</div><div class="chip" onclick="setPos('altitude','mc',this)">·</div><div class="chip" onclick="setPos('altitude','mr',this)">→</div>
+          <div class="chip" onclick="setPos('altitude','bl',this)">↙</div><div class="chip" onclick="setPos('altitude','bc',this)">↓</div><div class="chip" onclick="setPos('altitude','br',this)">↘</div>
+        </div>
+        <div class="tr" onclick="toggleOverlayBg('altitude',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-altitude"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Style</div>
+        <div class="chips">
+          <button class="chip on" id="alt-style-panel" onclick="setAltStyle('panel',this)">Panel</button>
+          <button class="chip" id="alt-style-gauge" onclick="setAltStyle('gauge',this)">◔ Arc Gauge</button>
+        </div>
+      </div>
+    </div>
+
     <div class="oc" id="oc-odometer">
       <div class="och">
         <div class="tr" onclick="toggleOpt('odometer',this)" style="flex:1;border:none;padding:0;background:none">
@@ -681,8 +741,10 @@
           <div class="chip" onclick="setPos('map','bl',this)">↙</div><div class="chip" onclick="setPos('map','bc',this)">↓</div><div class="chip" onclick="setPos('map','br',this)">↘</div>
         </div>        <div class="sub-lbl" style="margin-top:4px">Shape</div>
         <div class="tr" onclick="toggleOverlayBg('map',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-map"><div class="th"></div></div></div>
-        <div class="chips" id="map-shape-chips">
+        <div class="chips" id="map-shape-chips" style="flex-wrap:wrap">
           <button class="chip" onclick="setMapShape('circle',this)">⬤ Circle</button>
+          <button class="chip" onclick="setMapShape('hexagon',this)">⬡ Hexagon</button>
+          <button class="chip" onclick="setMapShape('diamond',this)">◆ Diamond</button>
           <button class="chip" onclick="setMapShape('square',this)">■ Square</button>
           <button class="chip on" onclick="setMapShape('none',this)">□ None</button>
         </div>
@@ -745,6 +807,12 @@
           <div class="chip" onclick="setPos('gpstime','bl',this)">↙</div><div class="chip" onclick="setPos('gpstime','bc',this)">↓</div><div class="chip" onclick="setPos('gpstime','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('gpstime',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-gpstime"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Style</div>
+        <div class="chips">
+          <button class="chip on" id="gpstime-style-standard" onclick="setGpsTimeStyle('standard',this)">Standard</button>
+          <button class="chip" id="gpstime-style-minimal" onclick="setGpsTimeStyle('minimal',this)">Minimal</button>
+          <button class="chip" id="gpstime-style-pill" onclick="setGpsTimeStyle('pill',this)">Pill</button>
+        </div>
         <div class="sub-lbl">Format</div>
         <div class="chips">
           <button class="chip on" onclick="setGpsFmt('hms',this)">HH:MM:SS</button>
@@ -774,6 +842,12 @@
           <div class="chip" onclick="setPos('coords','bl',this)">↙</div><div class="chip" onclick="setPos('coords','bc',this)">↓</div><div class="chip on" onclick="setPos('coords','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('coords',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-coords"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Style</div>
+        <div class="chips">
+          <button class="chip on" id="coord-style-standard" onclick="setCoordStyle('standard',this)">Standard</button>
+          <button class="chip" id="coord-style-compact" onclick="setCoordStyle('compact',this)">Compact</button>
+          <button class="chip" id="coord-style-badge" onclick="setCoordStyle('badge',this)">Badge</button>
+        </div>
         <div class="sub-lbl">Format</div>
         <div class="chips">
           <button class="chip on" onclick="setCoordFmt('dms',this)">DMS</button>
@@ -802,6 +876,12 @@
           <div class="chip" onclick="setPos('info','bl',this)">↙</div><div class="chip" onclick="setPos('info','bc',this)">↓</div><div class="chip on" onclick="setPos('info','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('info',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-info"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Style</div>
+        <div class="chips">
+          <button class="chip on" id="info-style-list" onclick="setInfoStyle('list',this)">List</button>
+          <button class="chip" id="info-style-hrow" onclick="setInfoStyle('hrow',this)">━ H-Row</button>
+          <button class="chip" id="info-style-stacked" onclick="setInfoStyle('stacked',this)">▦ Cards</button>
+        </div>
       </div>
     </div>
 
@@ -821,6 +901,12 @@
           <div class="chip" onclick="setPos('arc','bl',this)">↙</div><div class="chip" onclick="setPos('arc','bc',this)">↓</div><div class="chip" onclick="setPos('arc','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('arc',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-arc"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Style</div>
+        <div class="chips">
+          <button class="chip on" id="arc-style-ring" onclick="setArcStyle('ring',this)">⭕ Ring</button>
+          <button class="chip" id="arc-style-hbar" onclick="setArcStyle('hbar',this)">━ Bar</button>
+          <button class="chip" id="arc-style-steps" onclick="setArcStyle('steps',this)">⠿ Steps</button>
+        </div>
       </div>
     </div>
 
@@ -840,6 +926,11 @@
           <div class="chip" onclick="setPos('elev','bl',this)">↙</div><div class="chip on" onclick="setPos('elev','bc',this)">↓</div><div class="chip" onclick="setPos('elev','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('elev',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-elev"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Style</div>
+        <div class="chips">
+          <button class="chip on" id="elev-style-line" onclick="setElevStyle('line',this)">Line</button>
+          <button class="chip" id="elev-style-area" onclick="setElevStyle('area',this)">▲ Area Fill</button>
+        </div>
       </div>
     </div>
 
@@ -920,8 +1011,10 @@
         <div class="tr" onclick="toggleOverlayBg('compass',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-compass"><div class="th"></div></div></div>
         <div class="sub-lbl">Style</div>
         <div class="chips">
-          <button class="chip on" onclick="setCompassStyle('rose',this)">Rose</button>
-          <button class="chip" onclick="setCompassStyle('bar',this)">Bar</button>
+          <button class="chip on" id="compass-style-rose" onclick="setCompassStyle('rose',this)">Rose</button>
+          <button class="chip" id="compass-style-bar" onclick="setCompassStyle('bar',this)">Bar</button>
+          <button class="chip" id="compass-style-arrow" onclick="setCompassStyle('arrow',this)">↑ Arrow</button>
+          <button class="chip" id="compass-style-digital" onclick="setCompassStyle('digital',this)">0° Digital</button>
         </div>
       </div>
     </div>
@@ -942,6 +1035,12 @@
           <div class="chip" onclick="setPos('grade','bl',this)">↙</div><div class="chip" onclick="setPos('grade','bc',this)">↓</div><div class="chip" onclick="setPos('grade','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('grade',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-grade"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Style</div>
+        <div class="chips">
+          <button class="chip on" id="grade-style-bar" onclick="setGradeStyle('bar',this)">Bar</button>
+          <button class="chip" id="grade-style-arc" onclick="setGradeStyle('arc',this)">◔ Arc</button>
+          <button class="chip" id="grade-style-road" onclick="setGradeStyle('road',this)">⛰ Road</button>
+        </div>
       </div>
     </div>
 
@@ -991,6 +1090,11 @@
           <div class="chip" onclick="setPos('cadence','bl',this)">↙</div><div class="chip on" onclick="setPos('cadence','bc',this)">↓</div><div class="chip" onclick="setPos('cadence','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('cadence',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-cadence"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Style</div>
+        <div class="chips">
+          <button class="chip on" id="cad-style-standard" onclick="setCadStyle('standard',this)">Standard</button>
+          <button class="chip" id="cad-style-ring" onclick="setCadStyle('ring',this)">◑ Ring</button>
+        </div>
       </div>
     </div>
 

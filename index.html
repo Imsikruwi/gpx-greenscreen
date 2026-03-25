@@ -600,21 +600,26 @@
           </div>
         </div>
         <div class="sub-lbl">Max Speed</div>
-        <div class="chips" id="spd-max-chips">
-          <button class="chip on" id="spd-max-auto" onclick="setSpdMax('auto',this)">Auto</button>
-          <button class="chip" onclick="setSpdMax(30,this)">30</button>
-          <button class="chip" onclick="setSpdMax(60,this)">60</button>
-          <button class="chip" onclick="setSpdMax(80,this)">80</button>
-          <button class="chip" onclick="setSpdMax(100,this)">100</button>
-          <button class="chip" onclick="setSpdMax(120,this)">120</button>
-          <button class="chip" id="spd-max-custom" onclick="customSpdMax()">…</button>
+        <div class="chips" style="margin-bottom:4px">
+          <button class="chip on" id="spd-max-auto" onclick="toggleSpdMaxMode()">Auto</button>
+          <button class="chip" id="spd-max-custom-btn" onclick="toggleSpdMaxMode()" style="display:none">Custom ✎</button>
         </div>
-        <div class="sub-lbl" style="margin-top:4px;border-top:1px solid var(--border);padding-top:6px">Distance</div>
-        <div class="tr" onclick="toggleOpt('distov',this)">
-          <span class="tl" style="font-size:11px">Show distance below speed</span>
-          <div class="tt" id="tog-distov"><div class="th"></div></div>
+        <div id="spd-max-slider-row" style="display:none">
+          <div class="sm">
+            <span class="sl" id="spd-max-unit-lbl">Max km/h</span>
+            <span class="sv" id="spdMaxVal">120</span>
+          </div>
+          <input type="range" id="spd-max-slider" min="10" max="400" value="120" step="5"
+                 oninput="setSpdMaxSlider(this.value)" style="width:100%;margin-top:2px">
         </div>
-        <div id="distov-opts">
+        <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)">📏 Distance Below Speed</span>
+            <div class="tr" onclick="toggleDistovOpt(this)" style="border:none;padding:0;background:none;cursor:pointer">
+              <div class="tt" id="tog-distov"><div class="th"></div></div>
+            </div>
+          </div>
+          <div id="distov-opts" style="display:none;flex-direction:column;gap:4px">
           <div class="sub-lbl">Decimal Places</div>
           <div class="chips">
             <button class="chip" onclick="setDistDec(0,this)">0</button>
@@ -637,11 +642,11 @@
                      oninput="setOdoScale(this.value)" style="width:100%;margin-top:2px">
             </div>
           </div>
-        </div>
-          <div class="sr" style="margin-top:4px">
-            <div class="sm"><span class="sl">Distance gap</span><span class="sv" id="spdGapVal">4px</span></div>
-            <input type="range" id="spd-gap-slider" min="0" max="30" value="4" step="1"
-                   oninput="setSpdGap(this.value)" style="width:100%;margin-top:2px">
+            <div class="sr" style="margin-top:2px">
+              <div class="sm"><span class="sl">Distance gap</span><span class="sv" id="spdGapVal">4px</span></div>
+              <input type="range" id="spd-gap-slider" min="0" max="30" value="4" step="1"
+                     oninput="setSpdGap(this.value)" style="width:100%;margin-top:2px">
+            </div>
           </div>
         </div>
       </div>
@@ -963,6 +968,12 @@
           <div class="chip" onclick="setPos('gforce','bl',this)">↙</div><div class="chip" onclick="setPos('gforce','bc',this)">↓</div><div class="chip" onclick="setPos('gforce','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('gforce',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-gforce"><div class="th"></div></div></div>
+        <div class="sub-lbl" style="margin-top:4px">Value Position</div>
+        <div class="chips">
+          <button class="chip" id="gftext-top" onclick="setGforceTextPos('top',this)">Top</button>
+          <button class="chip on" id="gftext-center" onclick="setGforceTextPos('center',this)">Center</button>
+          <button class="chip" id="gftext-bottom" onclick="setGforceTextPos('bottom',this)">Bottom</button>
+        </div>
         <div class="sub-lbl">Scale</div>
         <div class="chips">
           <button class="chip on" onclick="setGforceScale(1,this)">1G</button>
@@ -989,7 +1000,22 @@
           <div class="chip" onclick="setPos('watermark','bl',this)">↙</div><div class="chip" onclick="setPos('watermark','bc',this)">↓</div><div class="chip" onclick="setPos('watermark','br',this)">↘</div>
         </div>
         <div class="tr" onclick="toggleOverlayBg('watermark',this)" style="margin-top:6px"><span class="tl" style="font-size:11px">Background / Border</span><div class="tt" id="tog-bg-watermark"><div class="th"></div></div></div>
-        <div style="font-size:10px;color:var(--text3);font-family:var(--fm);margin-top:4px">Show GPX-GreenScreen text</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--fm);margin-top:4px">Default: GPXGreenscreen text watermark</div>
+        <div class="sub-lbl" style="margin-top:6px">Custom Logo / Image</div>
+        <div id="wmLoaded" style="display:none;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
+          <span style="font-size:10px;color:var(--text3)" id="wmFileName">—</span>
+          <button class="chip" onclick="clearCustomWatermark()" style="font-size:10px;padding:2px 7px;color:#ff8080">✕ Remove</button>
+        </div>
+        <label id="wmUploadBtn" class="chip" style="cursor:pointer;font-size:11px;display:flex;align-items:center;gap:4px;width:fit-content">
+          <input type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" id="wmImageInput" onchange="loadCustomWatermark(this)" style="display:none">
+          📁 Upload Logo
+        </label>
+        <div class="sub-lbl" style="margin-top:6px">Opacity</div>
+        <div class="sr">
+          <div class="sm"><span class="sl">Logo opacity</span><span class="sv" id="wmOpacityVal">100%</span></div>
+          <input type="range" id="wm-opacity-slider" min="10" max="100" value="100" step="5"
+                 oninput="setWmOpacity(this.value)" style="width:100%;margin-top:2px">
+        </div>
       </div>
     </div>
 

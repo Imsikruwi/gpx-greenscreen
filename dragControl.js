@@ -171,9 +171,9 @@ function getOverlayBounds(key){
     case 'grade': {
       const gStyle=window._gradeStyle||'bar';
       if(gStyle==='arc'){
-        const R=Math.round(46*fs); w=R*2+Math.round(12*fs); h=Math.round(R+Math.round(30*fs));
+        const R=Math.round(46*fs); w=R*2+Math.round(16*fs); h=Math.round(R+Math.round(34*fs));
       } else if(gStyle==='road'){
-        w=Math.round(120*fs); h=Math.round(70*fs);
+        w=Math.round(140*fs); h=Math.round(80*fs);
       } else {
         w=Math.round(140*fs); h=Math.round(52*fs);
       }

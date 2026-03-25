@@ -246,9 +246,8 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
     const odoSH  = distOdoMode ? Math.round(22*fs*odoScale) + Math.round(10*fs) : 0; const stripH = distOdoMode ? Math.max(Math.round(32*fs), odoSH) : Math.round(28*fs);
     
     if(bgOn){
-        ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.fillRect(sx, sy, sw, stripH);
-        ctx.beginPath(); ctx.moveTo(sx, sy);ctx.lineTo(sx+sw, sy); ctx.lineTo(sx+sw, sy+stripH-Math.round(6*fs)); ctx.quadraticCurveTo(sx+sw, sy+stripH, sx+sw-Math.round(6*fs), sy+stripH); ctx.lineTo(sx+Math.round(6*fs), sy+stripH); ctx.quadraticCurveTo(sx, sy+stripH, sx, sy+stripH-Math.round(6*fs)); ctx.lineTo(sx, sy);
-        ctx.fillStyle=`rgba(255,255,255,0.05)`;ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath();ctx.moveTo(sx+6,sy);ctx.lineTo(sx+sw-6,sy);ctx.stroke();
+        ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(sx,sy,sw,stripH,Math.round(6*fs)); ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath(); ctx.roundRect(sx,sy,sw,stripH,Math.round(6*fs)); ctx.stroke();
     }
     
     if(distOdoMode){
@@ -726,14 +725,20 @@ function drawGpsTimeOverlay(ctx, pt, W, H) {
     const bigF=Math.round(22*fs), lblF=Math.round(7*fs);
     ctx.font=`bold ${bigF}px ${ovFont()}`; const tw=ctx.measureText(ts).width;
     const lblW=Math.round(34*fs); const pad=Math.round(10*fs);
-    const bw=lblW+tw+pad*2+Math.round(8*fs); const bh=Math.round(38*fs);
+    const pillH=Math.round(38*fs);
+    const dateH=gpsShowDate&&ds?Math.round(14*fs):0;
+    const bw=lblW+tw+pad*2+Math.round(8*fs); const bh=pillH+dateH;
     const{x:gx,y:gy}=posXY(oPos.gpstime,W,H,bw,bh);
-    if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(gx,gy,bw,bh,bh/2); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath(); ctx.roundRect(gx,gy,bw,bh,bh/2); ctx.stroke(); }
+    if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(gx,gy,bw,pillH,pillH/2); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath(); ctx.roundRect(gx,gy,bw,pillH,pillH/2); ctx.stroke(); }
     ctx.font=`${lblF}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.globalAlpha=0.4;
     ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('TIME', gx+lblW/2, gy+Math.round(6*fs));
-    ctx.globalAlpha=1; ctx.textBaseline='bottom'; ctx.fillText(gpsFmt==='hms'?'HH:MM:SS':'MM:SS', gx+lblW/2, gy+bh-Math.round(6*fs));
+    ctx.globalAlpha=1; ctx.textBaseline='bottom'; ctx.fillText(gpsFmt==='hms'?'HH:MM:SS':'MM:SS', gx+lblW/2, gy+pillH-Math.round(6*fs));
     ctx.font=`bold ${bigF}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.globalAlpha=1;
-    ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(ts, gx+lblW+Math.round(8*fs), gy+bh/2);
+    ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(ts, gx+lblW+Math.round(8*fs), gy+pillH/2);
+    if(gpsShowDate&&ds){
+      ctx.font=`${lblF}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.globalAlpha=0.5;
+      ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(ds, gx+bw/2, gy+pillH+Math.round(2*fs));
+    }
 
   } else {
     // ── Standard (default) ──
@@ -829,10 +834,12 @@ function drawElevOverlay(ctx, pt, points, n, W, H, prog) {
       ctx.strokeStyle=textColor; ctx.lineWidth=Math.round(1.5*fs); ctx.lineJoin='round'; ctx.lineCap='round'; ctx.stroke();
     }
   } else {
+    let fi2=true;
     ctx.beginPath();ctx.strokeStyle='rgba(255,255,255,.14)';ctx.lineWidth=1.5;ctx.lineJoin='round';
-    for(let i=0;i<points.length;i+=step){ fi=(i===0); fi?ctx.moveTo(toFX(i),toFY(i)):ctx.lineTo(toFX(i),toFY(i)); } ctx.stroke();
-    ctx.beginPath();ctx.strokeStyle=textColor;ctx.lineWidth=2;
-    for(let i=0;i<=n;i+=step){ fi=(i===0); fi?ctx.moveTo(toFX(i),toFY(i)):ctx.lineTo(toFX(i),toFY(i)); } ctx.stroke();
+    for(let i=0;i<points.length;i+=step){ fi2=(i===0); fi2?ctx.moveTo(toFX(i),toFY(i)):ctx.lineTo(toFX(i),toFY(i)); } ctx.stroke();
+    fi2=true;
+    ctx.beginPath();ctx.strokeStyle=textColor;ctx.lineWidth=Math.round(1.5*fs);ctx.lineJoin='round';
+    for(let i=0;i<=n;i+=step){ fi2=(i===0); fi2?ctx.moveTo(toFX(i),toFY(i)):ctx.lineTo(toFX(i),toFY(i)); } ctx.stroke();
   }
   const mx=gX+prog*gW; const my=gY+gH-((pt.ele-gpxData.minEle)/eR)*gH;
   ctx.beginPath();ctx.arc(mx,my,Math.round(4*fs),0,Math.PI*2);ctx.fillStyle=textColor;ctx.fill();
@@ -858,7 +865,16 @@ function drawGForceOverlay(ctx, pt, W, H) {
   ctx.beginPath();ctx.arc(dotX,dotY,Math.round(10*fs),0,Math.PI*2); const gGrad=ctx.createRadialGradient(dotX,dotY,0,dotX,dotY,Math.round(10*fs)); const dotCol=Math.abs(gl)>1||Math.abs(gla)>1?'#ff4444':'#4af0a0'; gGrad.addColorStop(0,dotCol+'cc');gGrad.addColorStop(1,'transparent'); ctx.fillStyle=gGrad;ctx.fill(); 
   ctx.beginPath();ctx.arc(dotX,dotY,Math.round(5*fs),0,Math.PI*2); ctx.fillStyle=dotCol;ctx.fill(); ctx.strokeStyle=textColor;ctx.lineWidth=Math.round(fs);ctx.stroke(); 
   ctx.font=`bold ${Math.round(9*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('ACCEL',cx,gy+Math.round(4*fs)); ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('BRAKE',cx,gy+sz-Math.round(4*fs)); ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('L',gx+Math.round(4*fs),cy); ctx.textAlign='right';ctx.fillText('R',gx+sz-Math.round(4*fs),cy); 
-  const totalG=Math.sqrt(gl*gl+gla*gla); ctx.font=`bold ${Math.round(16*fs)}px ${ovFont()}`; ctx.fillStyle=textColor;ctx.textAlign='center';ctx.textBaseline='middle'; ctx.fillText(totalG.toFixed(2)+'G',cx,cy); 
+  const totalG=Math.sqrt(gl*gl+gla*gla);
+  ctx.font=`bold ${Math.round(16*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.textAlign='center';
+  const gtp=window._gforceTextPos||'center';
+  if(gtp==='top'){
+    ctx.textBaseline='top'; ctx.fillText(totalG.toFixed(2)+'G',cx,gy+Math.round(6*fs));
+  } else if(gtp==='bottom'){
+    ctx.textBaseline='bottom'; ctx.fillText(totalG.toFixed(2)+'G',cx,gy+sz-Math.round(6*fs));
+  } else {
+    ctx.textBaseline='middle'; ctx.fillText(totalG.toFixed(2)+'G',cx,cy);
+  }
   ctx.restore();
 }
 
@@ -979,60 +995,90 @@ function drawGradeOverlay(ctx, pt, W, H) {
   ctx.save();
 
   if(gradeStyle==='arc'){
-    // ── Arc gauge: setengah lingkaran tengah=flat, kiri=turun, kanan=naik ──
-    const R=Math.round(46*fs); const sz=R*2+Math.round(12*fs); const panH=Math.round(R+Math.round(30*fs));
+    // ── Arc gauge: semicircle, center=flat, left=downhill, right=uphill ──
+    const R=Math.round(46*fs); const sz=R*2+Math.round(16*fs); const panH=Math.round(R+Math.round(34*fs));
     const{x:gx,y:gy}=posXY(oPos.grade,W,H,sz,panH);
-    const cx=gx+sz/2, cy=gy+R+Math.round(6*fs);
-    if(bgOn){ ctx.beginPath(); ctx.arc(cx,cy,R+Math.round(4*fs),-Math.PI,0); ctx.lineTo(cx+R+Math.round(4*fs),gy+panH); ctx.lineTo(cx-R-Math.round(4*fs),gy+panH); ctx.closePath(); ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.fill(); }
-    // Track
-    ctx.beginPath(); ctx.arc(cx,cy,R,-Math.PI,0); ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=Math.round(7*fs); ctx.lineCap='round'; ctx.stroke();
-    // Fill
-    const maxG=15; const gradeAngle=Math.min(1,absg/maxG)*Math.PI*0.9;
-    if(absg>0.2){
-      const startAng=isDn?-Math.PI:-Math.PI/2;
-      const endAng=isDn?(-Math.PI+gradeAngle):(gradeAngle);
-      ctx.beginPath(); ctx.arc(cx,cy,R,isDn?(-Math.PI+gradeAngle):(-gradeAngle),isDn?-Math.PI/2:-Math.PI/2,isDn);
-      ctx.strokeStyle=gradColor; ctx.lineWidth=Math.round(7*fs); ctx.lineCap='round'; ctx.stroke();
+    const cx=gx+sz/2, cy=gy+R+Math.round(8*fs);
+    if(bgOn){
+      ctx.fillStyle=`rgba(0,0,0,${panelOp})`;
+      ctx.beginPath(); ctx.arc(cx,cy,R+Math.round(6*fs),Math.PI,0,false);
+      ctx.lineTo(cx+R+Math.round(6*fs),gy+panH); ctx.lineTo(cx-R-Math.round(6*fs),gy+panH); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=Math.round(fs*0.5);
+      ctx.beginPath(); ctx.arc(cx,cy,R+Math.round(6*fs),Math.PI,0,false);
+      ctx.lineTo(cx+R+Math.round(6*fs),gy+panH); ctx.lineTo(cx-R-Math.round(6*fs),gy+panH); ctx.closePath(); ctx.stroke();
     }
+    // Track (full semicircle, left to right = -PI to 0)
+    ctx.beginPath(); ctx.arc(cx,cy,R,Math.PI,0,false);
+    ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=Math.round(8*fs); ctx.lineCap='round'; ctx.stroke();
+    // Fill arc from center towards direction of grade
+    // center = -PI/2 (top). uphill = right (0), downhill = left (PI / -PI)
+    const maxG=25; const clampedGrade=Math.max(-maxG,Math.min(maxG,grade));
+    // Map grade to arc: grade +maxG → 0 (right), 0 → -PI/2 (top), -maxG → -PI (left)
+    const needleA=-(Math.PI/2)+(clampedGrade/maxG)*(Math.PI/2);
+    if(absg>0.3){
+      const fillStart=-Math.PI/2; // center top
+      const fillEnd=needleA;
+      ctx.beginPath();
+      if(isUp){ ctx.arc(cx,cy,R,fillStart,fillEnd,false); }
+      else if(isDn){ ctx.arc(cx,cy,R,fillEnd,fillStart,false); }
+      ctx.strokeStyle=gradColor; ctx.lineWidth=Math.round(8*fs); ctx.lineCap='round'; ctx.stroke();
+    }
+    // Tick marks: -30,-15,0,+15,+30 mapped to angle
+    [[-maxG,'L'],[-maxG/2,''],[ 0,'─'],[maxG/2,''],[ maxG,'R']].forEach(([g,lbl])=>{
+      const a=-(Math.PI/2)+(g/maxG)*(Math.PI/2);
+      const r1=R-Math.round(2*fs), r2=R+Math.round(4*fs);
+      ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1); ctx.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);
+      ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=Math.round(fs); ctx.lineCap='butt'; ctx.stroke();
+    });
     // Needle
-    const needleAngle=-Math.PI/2+Math.min(Math.PI*0.9,Math.max(-Math.PI*0.9,(grade/maxG)*Math.PI*0.9));
-    ctx.save(); ctx.translate(cx,cy); ctx.rotate(needleAngle);
-    ctx.beginPath(); ctx.moveTo(0,-R+Math.round(10*fs)); ctx.lineTo(-Math.round(2.5*fs),0); ctx.lineTo(Math.round(2.5*fs),0); ctx.closePath();
-    ctx.fillStyle=textColor; ctx.fill(); ctx.restore();
-    ctx.beginPath(); ctx.arc(cx,cy,Math.round(4*fs),0,Math.PI*2); ctx.fillStyle=textColor; ctx.fill();
-    // Text
-    ctx.font=`bold ${Math.round(16*fs)}px ${ovFont()}`; ctx.fillStyle=gradColor; ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.fillText(gradeStr, cx, cy+Math.round(4*fs));
-    ctx.font=`${Math.round(8*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.textBaseline='top';
-    ctx.fillText('GRADE', cx, cy+Math.round(20*fs));
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(needleA);
+    ctx.beginPath(); ctx.moveTo(0,-(R-Math.round(10*fs))); ctx.lineTo(-Math.round(3*fs),Math.round(4*fs)); ctx.lineTo(Math.round(3*fs),Math.round(4*fs)); ctx.closePath();
+    ctx.fillStyle=gradColor; ctx.fill(); ctx.restore();
+    ctx.beginPath(); ctx.arc(cx,cy,Math.round(5*fs),0,Math.PI*2); ctx.fillStyle=textColor; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,Math.round(3*fs),0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fill();
+    // Labels
+    ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('▼', gx+Math.round(4*fs), cy); ctx.textAlign='right'; ctx.fillText('▲', gx+sz-Math.round(4*fs), cy);
+    // Value and label below
+    ctx.font=`bold ${Math.round(14*fs)}px ${ovFont()}`; ctx.fillStyle=gradColor; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(gradeStr, cx, cy+Math.round(8*fs));
+    ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.textBaseline='top';
+    ctx.fillText('GRADE', cx, cy+Math.round(22*fs));
 
   } else if(gradeStyle==='road'){
     // ── Road visual: garis jalan miring + angka ──
-    const panW=Math.round(120*fs), panH=Math.round(70*fs);
+    const panW=Math.round(140*fs), panH=Math.round(80*fs);
     const{x:gx,y:gy}=posXY(oPos.grade,W,H,panW,panH);
-    if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(gx,gy,panW,panH,Math.round(6*fs)); ctx.fill(); }
-    // Road angle visualization
-    const roadAngle=Math.atan(grade/100);
-    const roadW=Math.round(50*fs); const roadCX=gx+Math.round(40*fs), roadCY=gy+panH*0.6;
-    ctx.save(); ctx.translate(roadCX,roadCY); ctx.rotate(-roadAngle);
+    if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(gx,gy,panW,panH,Math.round(6*fs)); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath(); ctx.roundRect(gx,gy,panW,panH,Math.round(6*fs)); ctx.stroke(); }
+    // Exaggerated visual angle (cap at 30deg visual)
+    const visualAngle=Math.atan2(Math.min(absg,30),100)*(isUp?-1:1);
+    const roadW=Math.round(60*fs);
+    const roadCX=gx+panW*0.5, roadCY=gy+panH*0.62;
+    ctx.save(); ctx.translate(roadCX,roadCY); ctx.rotate(visualAngle);
     // Road surface
-    ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.beginPath(); ctx.roundRect(-roadW/2,-Math.round(4*fs),roadW,Math.round(8*fs),Math.round(2*fs)); ctx.fill();
-    // Center line
-    ctx.strokeStyle=gradColor; ctx.lineWidth=Math.round(1.5*fs); ctx.setLineDash([Math.round(5*fs),Math.round(3*fs)]);
-    ctx.beginPath(); ctx.moveTo(-roadW/2,0); ctx.lineTo(roadW/2,0); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,255,255,0.12)'; ctx.beginPath(); ctx.roundRect(-roadW/2,-Math.round(5*fs),roadW,Math.round(10*fs),Math.round(3*fs)); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=Math.round(fs*0.8);
+    ctx.beginPath(); ctx.roundRect(-roadW/2,-Math.round(5*fs),roadW,Math.round(10*fs),Math.round(3*fs)); ctx.stroke();
+    // Dashed center line
+    if(absg>0.1){ ctx.strokeStyle=gradColor; } else { ctx.strokeStyle='rgba(255,255,255,0.4)'; }
+    ctx.lineWidth=Math.round(1.5*fs); ctx.setLineDash([Math.round(6*fs),Math.round(4*fs)]);
+    ctx.beginPath(); ctx.moveTo(-roadW/2+Math.round(4*fs),0); ctx.lineTo(roadW/2-Math.round(4*fs),0); ctx.stroke(); ctx.setLineDash([]);
     ctx.restore();
-    // Arrow indicator
+    // Arrow — placed to the right, points up for uphill, down for downhill
     if(absg>0.3){
-      const arrX=gx+Math.round(95*fs), arrY=gy+panH*0.5;
-      ctx.save(); ctx.translate(arrX,arrY); ctx.rotate(-roadAngle*(1+Math.min(2,absg/5)));
-      ctx.beginPath(); ctx.moveTo(0,-Math.round(12*fs)); ctx.lineTo(-Math.round(5*fs),Math.round(4*fs)); ctx.lineTo(Math.round(5*fs),Math.round(4*fs)); ctx.closePath();
+      const arrX=gx+panW-Math.round(20*fs), arrY=gy+panH*0.5;
+      const arrH=Math.round(14*fs); const arrW=Math.round(8*fs);
+      ctx.save(); ctx.translate(arrX,arrY);
+      // Rotate: -PI/2 = up (uphill), PI/2 = down (downhill)
+      ctx.rotate(isDn?Math.PI/2:-Math.PI/2);
+      ctx.beginPath(); ctx.moveTo(0,-arrH/2); ctx.lineTo(-arrW/2,arrH/4); ctx.lineTo(-arrW/4,arrH/4); ctx.lineTo(-arrW/4,arrH/2); ctx.lineTo(arrW/4,arrH/2); ctx.lineTo(arrW/4,arrH/4); ctx.lineTo(arrW/2,arrH/4); ctx.closePath();
       ctx.fillStyle=gradColor; ctx.fill(); ctx.restore();
     }
-    // Text
-    ctx.font=`bold ${Math.round(18*fs)}px ${ovFont()}`; ctx.fillStyle=gradColor; ctx.textAlign='left'; ctx.textBaseline='top';
+    // Text top-left
+    ctx.font=`bold ${Math.round(16*fs)}px ${ovFont()}`; ctx.fillStyle=gradColor; ctx.textAlign='left'; ctx.textBaseline='top';
     ctx.fillText(gradeStr, gx+Math.round(8*fs), gy+Math.round(8*fs));
-    ctx.font=`${Math.round(8*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.textBaseline='top';
-    ctx.fillText('GRADE', gx+Math.round(8*fs), gy+Math.round(26*fs));
+    ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.textBaseline='top';
+    ctx.fillText('GRADE', gx+Math.round(8*fs), gy+Math.round(24*fs));
 
   } else {
     // ── Bar (default) ──
@@ -1375,39 +1421,38 @@ function drawProgOverlay(ctx, W, H, prog) {
 
 // Ensure Watermark function is here (Outside other functions)
 function drawWatermarkOverlay(ctx, W, H) {
-  const fs = ovFS('watermark'); 
-  const text = "GPXGreenscreen";
-  
+  const fs = ovFS('watermark');
   ctx.save();
-  
-  // 1. Font disamakan dengan header: Syne, tebal (800), ukuran proporsional (24px)
-  ctx.font = `800 ${Math.round(24*fs)}px 'Syne', sans-serif`; 
-  
-  // Rapatkan jarak huruf agar identik dengan logo di header (jika browser mendukung)
-  if ('letterSpacing' in ctx) {
-    ctx.letterSpacing = `-${Math.round(0.8 * fs)}px`;
-  }
-
-  // Hitung ukuran aktual dari teks
-  const boxW = ctx.measureText(text).width;
-  const boxH = Math.round(26*fs); 
-
-  const {x, y} = posXY(oPos.watermark, W, H, boxW, boxH);
-
-  // 2. Warna font mengikuti textColor global + opacity custom watermark
-  ctx.fillStyle = textColor; 
   ctx.globalAlpha = customWatermarkOpacity;
-  
-  // 3. Beri drop shadow tipis agar tetap terbaca jika background video terang
-  ctx.shadowColor = 'rgba(0,0,0,0.6)';
-  ctx.shadowBlur = Math.round(6*fs);
-  ctx.shadowOffsetY = Math.round(2*fs);
 
-  ctx.textAlign = 'left'; 
-  ctx.textBaseline = 'top';
-  
-  // 4. Gambar teksnya
-  ctx.fillText(text, x, y);
-  
+  if(customWatermarkImage && customWatermarkImage.complete && customWatermarkImage.naturalWidth > 0){
+    // ── Custom logo image ──
+    const img = customWatermarkImage;
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    const maxH = Math.round(60 * fs);
+    const dw = Math.round(iw * (maxH / ih));
+    const dh = maxH;
+    const {x, y} = posXY(oPos.watermark, W, H, dw, dh);
+    // Drop shadow
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = Math.round(4*fs);
+    ctx.shadowOffsetY = Math.round(1*fs);
+    ctx.drawImage(img, x, y, dw, dh);
+  } else {
+    // ── Default text watermark ──
+    const text = "GPXGreenscreen";
+    ctx.font = `800 ${Math.round(24*fs)}px 'Syne', sans-serif`;
+    if('letterSpacing' in ctx) ctx.letterSpacing = `-${Math.round(0.8*fs)}px`;
+    const boxW = ctx.measureText(text).width;
+    const boxH = Math.round(26*fs);
+    const {x, y} = posXY(oPos.watermark, W, H, boxW, boxH);
+    ctx.fillStyle = textColor;
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = Math.round(6*fs);
+    ctx.shadowOffsetY = Math.round(2*fs);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(text, x, y);
+  }
   ctx.restore();
 }

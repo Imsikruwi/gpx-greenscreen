@@ -1,16 +1,27 @@
 # ⬡ GPX-GreenScreen (Beta)
 
-[GPX Greenscreen](https://imsikruwi.github.io/gpx-greenscreen) is a high-performance, browser-based tool designed to transform your GPX tracks into animated video overlays. Perfect for cycling, running, or automotive videos, it allows you to visualize telemetry data with professional-grade precision.
+**[🌐 Try it Live: https://imsikruwi.github.io/gpx-greenscreen](https://imsikruwi.github.io/gpx-greenscreen)**
+
+**GPX-GreenScreen** is a high-performance, browser-based tool designed to transform your GPX tracks into animated video overlays. Perfect for cycling, running, or automotive videos, it allows you to visualize telemetry data with professional-grade precision.
 
 ---
 
-## 🚀 Key Features
+## 🚀 Key Features & Latest Updates
 
+- **Advanced GPS Smoothing (New!)**: Implements a 5-point weighted moving average and strict "Stop Detection" to eliminate GPS drift (ghost speeds) when you are completely stationary.
+- **Smart Rendering System (New!)**:
+  - **Pause & Resume**: Pause your rendering process at any time without losing progress.
+  - **Safe Cancel**: Cancel renders safely with a confirmation prompt.
+  - **UI Lockdown**: Safely disables UI interactions, drags, and timeline shifts during rendering to prevent video glitches.
+  - **Tab Protection**: Warns you if you accidentally try to close or refresh the tab during a long render.
+  - **Dynamic ETA**: Smart, human-readable time estimates and automatic limits (Soft limit for MP4, Hard limit for ZIP) to prevent browser memory crashes.
+- **Enhanced Timeframe Selector**: 
+  - Now displays the **Actual GPS Time** alongside duration to help you sync with your raw video files.
+  - Features a live **Playhead indicator** (red line) to track your exact position during playback and rendering.
 - **Dynamic Overlays**: Speedometers (Gauge, Bar, HUD), Odometer, Mini Maps, Elevation Graphs, GPS Time, and Coordinates.
 - **Professional Export Options**:
   - **PNG + ZIP (Alpha Channel)**: Export with **100% Transparency** for perfect integration into video editors (Premiere, DaVinci, CapCut) without chroma keying.
   - **MP4 (WebCodecs)**: Fast, hardware-accelerated video encoding directly in your browser.
-- **Smooth Playback**: Advanced 60fps interpolation ensures fluid animations regardless of the recording interval or export frame rate.
 - **Interactive UI**: Drag-and-drop overlays to reposition them, adjust scales, opacities, and colors in real-time.
 - **Privacy Focused**: All processing is done locally. Your GPS data never leaves your computer.
 
@@ -50,5 +61,6 @@ Licensed under **CC BY-NC 4.0**.
 ---
 
 ### Support the Project
-Created with ❤️ by **Masagus Zulham (Imsikruwi)** · 2026  
-[☕ Support on Ko-fi](https://ko-fi.com/imsikruwi)
+Created with ❤️ by **Masagus Zulham**. If this tool saves you hours of editing, consider supporting its development!
+<br>
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/imsikruwi)

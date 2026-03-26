@@ -44,7 +44,11 @@ function redrawTFSel(c,W,H,pts){
   hl.style.left=pct1+'%'; hl.style.width=(pct2-pct1)+'%';
 }
 function onTfChange(){
-  let s=parseInt(document.getElementById('tfS').value); let e=parseInt(document.getElementById('tfE').value);
+  // Menolak perubahan jika sedang render
+  if (typeof isRendering !== 'undefined' && isRendering) return;
+  
+  let s=parseInt(document.getElementById('tfS').value); 
+  let e=parseInt(document.getElementById('tfE').value);
   const mg=Math.max(1,Math.floor(gpxData.points.length*0.01));
   if(document.activeElement===document.getElementById('tfS')){ if(s>e-mg){s=e-mg; document.getElementById('tfS').value=s} } 
   else { if(e<s+mg){e=s+mg; document.getElementById('tfE').value=e} }
@@ -65,7 +69,15 @@ function updateTFMid(){
 let _tfMidDrag=false, _tfMidStartX=0, _tfMidStartS=0, _tfMidStartE=0;
 function initTFMidDrag(){
   if(window._tfMidDragInited)return; window._tfMidDragInited=true;
-  document.addEventListener('mousedown',e=>{ const mid=document.getElementById('tfMid'); if(!mid||e.target!==mid)return; e.preventDefault(); _tfMidDrag=true; _tfMidStartX=e.clientX; _tfMidStartS=tfS0; _tfMidStartE=tfE0; });
+  document.addEventListener('mousedown',e=>{
+    // Menolak fungsi geser tengah jika sedang render
+    if (typeof isRendering !== 'undefined' && isRendering) return;
+    
+    const mid=document.getElementById('tfMid'); 
+    if(!mid||e.target!==mid)return; 
+    e.preventDefault(); 
+    _tfMidDrag=true; _tfMidStartX=e.clientX; _tfMidStartS=tfS0; _tfMidStartE=tfE0; 
+  });
   document.addEventListener('mousemove',e=>{
     if(!_tfMidDrag||!gpxData)return; const n=gpxData.points.length-1; const ww=document.getElementById('drWrap')?.offsetWidth||1;
     const dx=e.clientX-_tfMidStartX; const delta=Math.round(dx/ww*n); const dur=_tfMidStartE-_tfMidStartS;
@@ -125,7 +137,7 @@ function interpPoint(pts,i,t){
   if(i>=pts.length-1||t<=0) return pts[i]; if(t>=1) return pts[i+1];
   const a=pts[i],b=pts[i+1]; const lN=(x,y)=>x+(y-x)*t; const lNull=(x,y)=>(x!=null&&y!=null)?lN(x,y):(x??y); let dh=(b.heading-a.heading+540)%360-180;
   
-  // EN: Interpolate timestamp so the GPS clock ticks smoothly during GPX gaps
+  // Interpolate timestamp so the GPS clock ticks smoothly during GPX gaps
   const interpTime = (a.time && b.time) ? new Date(a.time.getTime() + (b.time.getTime() - a.time.getTime()) * t) : a.time;
   
   return{ lat:lN(a.lat,b.lat), lon:lN(a.lon,b.lon), ele:lN(a.ele,b.ele), speed_ms:lN(a.speed_ms,b.speed_ms), cumDist:lN(a.cumDist,b.cumDist), heading:(a.heading+dh*t+360)%360, grade:lN(a.grade,b.grade), gLong:lN(a.gLong,b.gLong), gLat:lN(a.gLat,b.gLat), hr:lNull(a.hr,b.hr), cad:lNull(a.cad,b.cad), power:lNull(a.power,b.power), time:interpTime };
@@ -164,11 +176,11 @@ function playLoop(ts){
   }
   rafId=requestAnimationFrame(playLoop);
 }
-function updScrub(sec){ document.getElementById('scrubber').value=curFrame; if(sec!=null) document.getElementById('timeDisplay').textContent=fmtTime(sec); else{ const pt=gpxData.points[curFrame]; const t0=gpxData.points[tfS0].time; const s=pt.time&&t0?(pt.time-t0)/1000:(curFrame-tfS0); document.getElementById('timeDisplay').textContent=fmtTime(s); } }
+
 function updScrub(sec){ 
   document.getElementById('scrubber').value=curFrame; 
   
-  // --- TAMBAHAN: Update posisi garis playhead di Timeframe ---
+  // --- Update posisi garis playhead di Timeframe ---
   const ph = document.getElementById('tfPlayhead');
   if(ph && gpxData) {
     const n = gpxData.points.length - 1;
@@ -187,6 +199,7 @@ function updScrub(sec){
     document.getElementById('timeDisplay').textContent=fmtTime(s); 
   } 
 }
+
 function drawFrameInterp(idx,frac){ if(!gpxData){drawFrame(idx);return;} const ipt=interpPoint(gpxData.points,idx,frac); drawFrameWithPt(idx,ipt); }
 
 // ═══════════════════════════════════════════════════════════
@@ -195,7 +208,7 @@ function drawFrameInterp(idx,frac){ if(!gpxData){drawFrame(idx);return;} const i
 function interpPt(a, b, t){
   const lerp=(x,y)=>x+(y-x)*t; const lerpNull=(x,y)=>(x!=null&&y!=null)?lerp(x,y):x??y;
   
-  // EN: Fix the time interpolation for ZIP exports as well
+  // Fix the time interpolation for ZIP exports as well
   const iTime = (a.time && b.time) ? new Date(a.time.getTime() + (b.time.getTime() - a.time.getTime()) * t) : a.time;
   
   return { lat:lerp(a.lat,b.lat), lon:lerp(a.lon,b.lon), ele:lerp(a.ele,b.ele), speed_ms:lerp(a.speed_ms,b.speed_ms), heading:lerp(a.heading,b.heading), grade:lerp(a.grade,b.grade), gLong:lerp(a.gLong,b.gLong), gLat:lerp(a.gLat,b.gLat), cumDist:lerp(a.cumDist,b.cumDist), hr:lerpNull(a.hr,b.hr), cad:lerpNull(a.cad,b.cad), power:lerpNull(a.power,b.power), time:iTime };
@@ -263,7 +276,6 @@ function toggleOpt(key,row){ opts[key]=!opts[key]; const tog=document.getElement
 function setPos(key,pos,el){ oPos[key]=pos; const grid=document.getElementById('pos-'+key); if(grid)grid.querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); drawFrame(curFrame); }
 function toggleSpdMaxMode(){
   if(spdMaxMode==='auto'){
-    // Switch to custom - use current auto max as starting value
     const autoMs = gpxData ? gpxData.maxSpeedMs : 30;
     const displayVal = Math.round(autoMs * (speedUnit==='mph'?2.237:speedUnit==='ms'?1:3.6));
     const sliderVal = Math.max(10, Math.min(400, displayVal));
@@ -280,7 +292,6 @@ function toggleSpdMaxMode(){
 function setSpdMaxAuto(el){ spdMaxMode='auto'; spdMaxCustom=0; updateSpdMaxSliderUI(); drawFrame(curFrame); }
 function setSpdMaxSlider(v){
   const val=parseInt(v);
-  // Convert from display unit to m/s
   let ms=val;
   if(speedUnit==='kmh') ms=val/3.6;
   else if(speedUnit==='mph') ms=val/2.237;
@@ -338,7 +349,6 @@ function setDialInputMode(mode, el){
   drawFrame(curFrame);
 }
 
-// Konversi nilai display (sesuai speedUnit) ke m/s untuk disimpan
 function dialDisplayToMs(val){
   val=parseFloat(val);
   if(speedUnit==='kmh')  return val/3.6;
@@ -348,7 +358,6 @@ function dialDisplayToMs(val){
   return val/3.6;
 }
 
-// Konversi m/s ke nilai display sesuai speedUnit
 function dialMsToDisplay(ms){
   return Math.round(cvtSpd(ms));
 }
@@ -426,7 +435,6 @@ function setGradeStyle(style,el){ window._gradeStyle=style; document.querySelect
 function handleLandingFile(input){ if(input.files&&input.files[0]){ const mainInput=document.getElementById('fileInput'); const file=input.files[0]; const reader=new FileReader(); reader.onload=e=>{try{parseGPX(e.target.result,file.name)}catch(err){notif('Parse error: '+err.message,'#ff5c5c')}}; reader.readAsText(file); } }
 function showMainApp(){ const lp=document.getElementById('landingPage'); if(lp){lp.style.opacity='0';lp.style.transition='opacity .3s';setTimeout(()=>lp.style.display='none',300);} const bell=document.getElementById('notifBellBtn'); if(bell) bell.style.display='flex'; }
 function savePreset(){
-  // Helper: convert HTMLImageElement → base64 data URL (returns null if not available)
   function imgToDataURL(img){
     if(!img || !img.naturalWidth) return null;
     try{
@@ -439,53 +447,28 @@ function savePreset(){
 
   notif('💾 Saving preset…','#f0a04a');
 
-  // Use setTimeout so the notif renders before potentially heavy base64 work
   setTimeout(()=>{
     try{
       const preset = {
         version: 3,
         _savedAt: new Date().toISOString(),
-
-        // ── Overlay on/off ──
         opts: {...opts},
-
-        // ── Posisi (string anchor atau {x,y} custom) ──
         oPos: JSON.parse(JSON.stringify(oPos)),
-
-        // ── Skala per-overlay ──
         oScale: JSON.parse(JSON.stringify(oScale)),
-
-        // ── Background per-overlay & global ──
         overlayBg: JSON.parse(JSON.stringify(overlayBg)),
         showOverlayBg,
-
-        // ── Global style ──
         textColor, fontScale, panelOp, bgColor,
-
-        // ── Overlay Font ──
         overlayFont,
-
-        // ── Speed overlay ──
         speedUnit, spdStyle, spdMaxMode, spdMaxCustom,
         spdDistGap: window._spdDistGap||4,
-
-        // ── GPS Time ──
         gpsFmt, gpsShowDate,
-
-        // ── Distance / Odometer ──
         distDecimals, distShowElev, distOdoMode,
         odoScale, odoScale2, odoShowBorder,
-
-        // ── Map ──
         osmMapShape, osmMapSize, osmZoom, osmStyle,
         osmTint, osmBrightness, osmContrast,
         osmShowRoute, osmShowHeading, osmUseOSM,
         mapBgStyle, mapRouteColor, mapDotColor, mapGhostColor, mapShowNorth,
-
-        // ── Coords ──
         coordFmt, coordShowIcon,
-
-        // ── G-Force / Compass ──
         gforceScale: window._gforceScale||1,
         compassStyle: window._compassStyle||'rose',
         hrStyle: window._hrStyle||'standard',
@@ -500,31 +483,14 @@ function savePreset(){
         gforceTextPos: window._gforceTextPos||'center',
         distStyle: window._distStyle||'panel',
         altStyle: window._altStyle||'panel',
-
-        // ── Dial appearance ──
         dialMode, dialInputMode, dialYellowPct, dialRedPct, dialYellowMs, dialRedMs,
-
-        // ── HR / Power ──
         hrMaxBpm, ftpWatts,
-
-        // ── Watermark / Logo ──
         customWatermarkOpacity,
         customWatermarkImageData: imgToDataURL(customWatermarkImage),
-
-        // ── Preview Background Image ──
         previewBgEnabled, previewBgFit, previewBgIncludeExport,
-        previewBgImageData: (previewBgImage && previewBgEnabled)
-          ? imgToDataURL(previewBgImage)
-          : null,
-
-        // ── Export / render ──
+        previewBgImageData: (previewBgImage && previewBgEnabled) ? imgToDataURL(previewBgImage) : null,
         exportTransparent, renderFmt, renderRes, fpsVal, bitrateVal,
-
-        // ── Canvas orientation ──
-        canvasOrient,
-
-        // ── Playback speed ──
-        playSpeed,
+        canvasOrient, playSpeed,
       };
 
       const json = JSON.stringify(preset, null, 2);
@@ -556,21 +522,11 @@ function loadPresetFile(input){
 function applyPreset(p){
   if(!p || ![1,2,3].includes(p.version)){ notif('Invalid or incompatible preset file','#ff5c5c'); return; }
   try{
-
-    // ── Overlay on/off ──
     if(p.opts) Object.assign(opts, p.opts);
-
-    // ── Posisi ──
     if(p.oPos) Object.assign(oPos, p.oPos);
-
-    // ── Skala per-overlay ──
     if(p.oScale){ Object.keys(oScale).forEach(k=>delete oScale[k]); Object.assign(oScale, p.oScale); }
-
-    // ── Background per-overlay & global ──
     if(p.overlayBg !== undefined){ Object.keys(overlayBg).forEach(k=>delete overlayBg[k]); Object.assign(overlayBg, p.overlayBg); }
     if(p.showOverlayBg !== undefined) showOverlayBg = p.showOverlayBg;
-
-    // ── Global style ──
     if(p.textColor)       textColor = p.textColor;
     if(p.fontScale!=null) fontScale = p.fontScale;
     if(p.panelOp!=null)   panelOp   = p.panelOp;
@@ -578,27 +534,19 @@ function applyPreset(p){
       bgColor = p.bgColor;
       const cw = document.getElementById('canvasWrapper'); if(cw) cw.style.background = bgColor;
     }
-
-    // ── Speed ──
     if(p.speedUnit)          speedUnit    = p.speedUnit;
     if(p.spdStyle)           spdStyle     = p.spdStyle;
     if(p.spdMaxMode)         spdMaxMode   = p.spdMaxMode;
     if(p.spdMaxCustom!=null) spdMaxCustom = p.spdMaxCustom;
     if(p.spdDistGap!=null)   window._spdDistGap = p.spdDistGap;
-
-    // ── GPS Time ──
     if(p.gpsFmt)            gpsFmt      = p.gpsFmt;
     if(p.gpsShowDate!=null)  gpsShowDate = p.gpsShowDate;
-
-    // ── Distance / Odometer ──
     if(p.distDecimals!=null)  distDecimals  = p.distDecimals;
     if(p.distShowElev!=null)  distShowElev  = p.distShowElev;
     if(p.distOdoMode!=null)   distOdoMode   = p.distOdoMode;
     if(p.odoScale!=null)      odoScale      = p.odoScale;
     if(p.odoScale2!=null)     odoScale2     = p.odoScale2;
     if(p.odoShowBorder!=null) odoShowBorder = p.odoShowBorder;
-
-    // ── Map ──
     if(p.osmMapShape)          osmMapShape    = p.osmMapShape;
     if(p.osmMapSize)           osmMapSize     = p.osmMapSize;
     if(p.osmZoom!=null)        osmZoom        = p.osmZoom;
@@ -614,12 +562,8 @@ function applyPreset(p){
     if(p.mapDotColor)          mapDotColor    = p.mapDotColor;
     if(p.mapGhostColor)        mapGhostColor  = p.mapGhostColor;
     if(p.mapShowNorth!=null)   mapShowNorth   = p.mapShowNorth;
-
-    // ── Coords ──
     if(p.coordFmt)            coordFmt      = p.coordFmt;
     if(p.coordShowIcon!=null)  coordShowIcon = p.coordShowIcon;
-
-    // ── G-Force / Compass ──
     if(p.gforceScale!=null)  window._gforceScale  = p.gforceScale;
     if(p.compassStyle)       window._compassStyle = p.compassStyle;
     if(p.hrStyle)            setHRStyle(p.hrStyle, null);
@@ -645,55 +589,36 @@ function applyPreset(p){
     if(p.dialYellowMs!=null)  dialYellowMs = p.dialYellowMs;
     if(p.dialRedMs!=null)     dialRedMs    = p.dialRedMs;
     if(dialInputMode==='speed') updateDialSpeedLabels();
-
-    // ── HR / Power ──
     if(p.hrMaxBpm!=null) hrMaxBpm = p.hrMaxBpm;
     if(p.ftpWatts!=null) ftpWatts = p.ftpWatts;
-
-    // ── Watermark opacity ──
     if(p.customWatermarkOpacity!=null) customWatermarkOpacity = p.customWatermarkOpacity;
-
-    // ── Preview Background state ──
     if(p.previewBgEnabled!=null)        previewBgEnabled        = p.previewBgEnabled;
     if(p.previewBgFit)                  previewBgFit            = p.previewBgFit;
     if(p.previewBgIncludeExport!=null)  previewBgIncludeExport  = p.previewBgIncludeExport;
-
-    // ── Export / render ──
     if(p.exportTransparent!=null) exportTransparent = p.exportTransparent;
     if(p.renderFmt)    renderFmt  = p.renderFmt;
     if(p.renderRes)    renderRes  = p.renderRes;
     if(p.fpsVal!=null) fpsVal     = p.fpsVal;
     if(p.bitrateVal!=null) bitrateVal = p.bitrateVal;
-
-    // ── Play speed ──
     if(p.playSpeed!=null) playSpeed = p.playSpeed;
 
-    // ════════════════════════════════════════════════════════
-    // SYNC UI — semua elemen HTML disinkronkan ke state
-    // ════════════════════════════════════════════════════════
-
-    // Overlay toggle cards
     Object.keys(opts).forEach(key=>{
       document.getElementById('tog-'+key)?.classList.toggle('on', !!opts[key]);
       document.getElementById('oc-'+key)?.classList.toggle('off', !opts[key]);
     });
 
-    // Background per-overlay
     document.getElementById('tog-global-bg')?.classList.toggle('on', showOverlayBg);
     document.querySelectorAll('[id^="tog-bg-"]').forEach(el=>{
       const key = el.id.replace('tog-bg-','');
       el.classList.toggle('on', overlayBg[key] !== undefined ? overlayBg[key] : showOverlayBg);
     });
 
-    // Font scale
     const fsSlider = document.getElementById('fs-slider');
     if(fsSlider){ fsSlider.value = Math.round(fontScale*100); document.getElementById('fsVal').textContent = fontScale.toFixed(2)+'×'; }
 
-    // Opacity
     const opSlider = document.querySelector('input[oninput="setOp(this.value)"]');
     if(opSlider){ opSlider.value = Math.round(panelOp*100); document.getElementById('opVal').textContent = Math.round(panelOp*100)+'%'; }
 
-    // BG color chips
     const bgMap = {'#00b140':'green','#0047ab':'blue','#000000':'black','#1a1a2e':'navy'};
     document.querySelectorAll('.chips [id^="bg-"]').forEach(b=>b.classList.remove('on'));
     const knownKey = bgMap[bgColor.toLowerCase()];
@@ -704,50 +629,40 @@ function applyPreset(p){
     if(bgPicker) bgPicker.value = bgColor;
     if(bgHex)    bgHex.value   = bgColor;
 
-    // Text color picker
     const tcPicker = document.getElementById('text-color-picker');
     const tcHex    = document.getElementById('text-hex-input');
     if(tcPicker) tcPicker.value = textColor;
     if(tcHex)    tcHex.value   = textColor;
-    // Sync color swatches
     document.querySelectorAll('.sw').forEach(sw=>{
       sw.classList.toggle('on', sw.style.background === textColor || sw.style.backgroundColor === textColor);
     });
 
-    // Overlay font
     if(p.overlayFont && OVERLAY_FONTS[p.overlayFont]) setOverlayFont(p.overlayFont, null);
 
-    // Speed unit
     document.querySelectorAll('[id^="unit-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('unit-'+speedUnit)?.classList.add('on');
 
-    // Speed style
     document.querySelectorAll('[id^="spd-style-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('spd-style-'+spdStyle)?.classList.add('on');
 
-    // Speed max mode
     document.querySelectorAll('[id^="spd-max-"]').forEach(b=>b.classList.remove('on'));
     updateSpdMaxSliderUI();
     const distovOptsEl=document.getElementById('distov-opts');
     if(distovOptsEl) distovOptsEl.style.display=opts.distov?'flex':'none';
     document.getElementById('tog-distov')?.classList.toggle('on',opts.distov);
 
-    // Speed gap slider
     const sgSlider = document.getElementById('spd-gap-slider');
     if(sgSlider){ sgSlider.value = window._spdDistGap; document.getElementById('spdGapVal').textContent = window._spdDistGap+'px'; }
 
-    // GPS format
     document.querySelectorAll('[id^="tf-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('tf-'+gpsFmt)?.classList.add('on');
     document.getElementById('tog-gpsdate')?.classList.toggle('on', gpsShowDate);
 
-    // Distance decimals
     document.querySelectorAll('[onclick^="setDistDec"]').forEach(b=>{
       b.classList.toggle('on', b.getAttribute('onclick').includes('('+distDecimals+','));
     });
     document.getElementById('tog-distelev')?.classList.toggle('on', distShowElev);
 
-    // Odometer mode & sliders
     document.getElementById('tog-distodo')?.classList.toggle('on', distOdoMode);
     const odoSizeOpts = document.getElementById('odo-size-opts');
     if(odoSizeOpts) odoSizeOpts.style.display = distOdoMode ? 'block' : 'none';
@@ -755,10 +670,8 @@ function applyPreset(p){
     if(odoSl){ odoSl.value = Math.round(odoScale*100); document.getElementById('odoScaleVal').textContent = odoScale.toFixed(1)+'×'; }
     const odoSl2 = document.getElementById('odo-scale-slider2');
     if(odoSl2){ odoSl2.value = Math.round(odoScale2*100); document.getElementById('odoScaleVal2').textContent = odoScale2.toFixed(1)+'×'; }
-    document.getElementById('tog-bg-odometer')?.classList.toggle('on',
-      overlayBg['odometer'] !== undefined ? overlayBg['odometer'] : showOverlayBg);
+    document.getElementById('tog-bg-odometer')?.classList.toggle('on', overlayBg['odometer'] !== undefined ? overlayBg['odometer'] : showOverlayBg);
 
-    // Map settings
     document.querySelectorAll('[id^="osm-shape-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('osm-shape-'+osmMapShape)?.classList.add('on');
     document.querySelectorAll('[id^="osm-style-"]').forEach(b=>b.classList.remove('on'));
@@ -776,32 +689,25 @@ function applyPreset(p){
     if(ozSlider){ ozSlider.value = osmZoom; const ozVal = document.getElementById('osmZoomVal'); if(ozVal) ozVal.textContent = osmZoom; }
     const brSlider = document.getElementById('osmBrightnessSlider');
     if(brSlider) brSlider.value = osmBrightness;
-    // Route color picker
     const rcp = document.getElementById('route-color-picker');
     if(rcp) rcp.value = mapRouteColor;
     document.querySelectorAll('[id^="rc-"]').forEach(b=>b.classList.remove('on'));
-    // Dot color picker
     const dcp = document.getElementById('dot-color-picker');
     if(dcp) dcp.value = mapDotColor;
     document.querySelectorAll('[id^="dc-"]').forEach(b=>b.classList.remove('on'));
 
-    // Coords
     document.querySelectorAll('[id^="coord-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('coord-'+coordFmt)?.classList.add('on');
     document.getElementById('tog-coordicon')?.classList.toggle('on', coordShowIcon);
 
-    // G-Force scale chips (1G / 2G / 3G)
     const gfsVal = window._gforceScale||1;
     document.querySelectorAll('[onclick^="setGforceScale"]').forEach(b=>{
       const match = b.getAttribute('onclick').match(/setGforceScale\((\d+)/);
       if(match) b.classList.toggle('on', parseInt(match[1]) === gfsVal);
     });
 
-    // Compass style
     document.querySelectorAll('[id^="compass-style-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('compass-style-'+(window._compassStyle||'rose'))?.classList.add('on');
-
-    // New overlay style chips
     document.querySelectorAll('[id^="gftext-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('gftext-'+(window._gforceTextPos||'center'))?.classList.add('on');
     document.querySelectorAll('[id^="dist-style-"]').forEach(b=>b.classList.remove('on'));
@@ -827,19 +733,13 @@ function applyPreset(p){
     document.querySelectorAll('[id^="cad-style-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('cad-style-'+(window._cadStyle||'standard'))?.classList.add('on');
 
-    // HR max slider
     const hrSlider = document.getElementById('hr-slider');
     if(hrSlider){ hrSlider.value = hrMaxBpm; document.getElementById('hrMaxVal').textContent = hrMaxBpm+' bpm'; }
-
-    // FTP slider
     const ftpSlider = document.getElementById('ftp-slider');
     if(ftpSlider){ ftpSlider.value = ftpWatts; document.getElementById('ftpVal').textContent = ftpWatts+' W'; }
-
-    // Watermark opacity slider
     const wmSlider = document.getElementById('wm-opacity-slider');
     if(wmSlider){ wmSlider.value = Math.round(customWatermarkOpacity*100); document.getElementById('wmOpacityVal').textContent = Math.round(customWatermarkOpacity*100)+'%'; }
 
-    // Preview BG toggles & fit chips
     document.getElementById('tog-preview-bg-enabled')?.classList.toggle('on', previewBgEnabled);
     document.getElementById('tog-preview-bg-export')?.classList.toggle('on', previewBgIncludeExport);
     const bgFitChips = document.getElementById('previewBgFitChips');
@@ -848,23 +748,15 @@ function applyPreset(p){
       if(m) b.classList.toggle('on', m[1] === previewBgFit);
     });
 
-    // Export transparent
     document.getElementById('tog-export-trans')?.classList.toggle('on', exportTransparent);
-
-    // Render format chips
     document.querySelectorAll('[id^="fmt-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('fmt-'+renderFmt)?.classList.add('on');
-
-    // Resolution chips
     document.querySelectorAll('[id^="res-"]').forEach(b=>b.classList.remove('on'));
     document.getElementById('res-'+renderRes)?.classList.add('on');
-
-    // FPS chips
     document.querySelectorAll('.chips .chip[onclick^="setFPS"]').forEach(b=>{
       b.classList.toggle('on', b.textContent.trim() === String(fpsVal));
     });
 
-    // Bitrate slider
     const brSlider2 = document.getElementById('br-slider');
     if(brSlider2){
       brSlider2.value = bitrateVal;
@@ -874,20 +766,15 @@ function applyPreset(p){
       document.querySelector(`.br-presets .chip[onclick*="${bitrateVal}"]`)?.classList.add('on');
     }
 
-    // Play speed chips
     document.querySelectorAll('.playbar .chip[onclick^="setPlaySpeed"]').forEach(b=>{
       const m = b.getAttribute('onclick').match(/setPlaySpeed\((\d+)/);
       if(m) b.classList.toggle('on', parseInt(m[1]) === playSpeed);
     });
 
-    // Canvas orientation
     if(p.canvasOrient){
       canvasOrient = p.canvasOrient;
       document.getElementById('orient-'+canvasOrient)?.click();
     }
-
-    // ── Restore images async (base64 → HTMLImageElement) ──
-    // Must happen after state is set so drawFrame picks them up correctly
 
     function restoreImage(dataURL, onDone){
       if(!dataURL){ onDone(null); return; }
@@ -907,7 +794,6 @@ function applyPreset(p){
       }
     };
 
-    // Watermark image
     pendingImages++;
     restoreImage(p.customWatermarkImageData, img => {
       customWatermarkImage = img;
@@ -921,7 +807,6 @@ function applyPreset(p){
       tryFinalDraw();
     });
 
-    // Preview background image
     pendingImages++;
     restoreImage(p.previewBgImageData, img => {
       if(img){
@@ -934,7 +819,6 @@ function applyPreset(p){
         if(lbl) lbl.innerHTML = `<input type="file" accept="image/*" id="previewBgInput" onchange="loadPreviewBgImage(this)" style="display:none">🔄 Change Image`;
         document.getElementById('tog-preview-bg-enabled')?.classList.toggle('on', previewBgEnabled);
       } else {
-        // If no bg image saved, clear it
         previewBgImage   = null;
         previewBgEnabled = false;
         document.getElementById('previewBgLoaded')?.style && (document.getElementById('previewBgLoaded').style.display = 'none');
@@ -954,38 +838,24 @@ function toggleDistElev(row){ distShowElev=!distShowElev; const tog=document.get
 function toggleGlobalBg(row){
   showOverlayBg=!showOverlayBg;
   document.getElementById('tog-global-bg')?.classList.toggle('on',showOverlayBg);
-  // Reset semua override per-overlay, lalu sinkronkan UI
   Object.keys(overlayBg).forEach(k=>delete overlayBg[k]);
   document.querySelectorAll('[id^="tog-bg-"]').forEach(el=>el.classList.toggle('on',showOverlayBg));
   drawFrame(curFrame);
 }
 function toggleOverlayBg(key,row){
-  // Per-overlay: jika belum punya override, ambil dari global dulu lalu flip
   const cur = overlayBg[key] !== undefined ? overlayBg[key] : showOverlayBg;
   overlayBg[key] = !cur;
   document.getElementById('tog-bg-'+key)?.classList.toggle('on', overlayBg[key]);
-  // Odometer: satu tombol mengontrol border sekaligus background
   if(key === 'odometer'){ odoShowBorder = overlayBg[key]; }
   drawFrame(curFrame);
 }
 function setOp(v){ panelOp=parseInt(v)/100; document.getElementById('opVal').textContent=v+'%'; drawFrame(curFrame); }
 function confirmDialog(title, msg, onConfirm){ const bd=document.createElement('div'); bd.className='confirm-backdrop'; bd.innerHTML=`<div class="confirm-box"><div class="confirm-title">${title}</div><div class="confirm-msg">${msg}</div><div class="confirm-btns"><button class="bs" onclick="this.closest('.confirm-backdrop').remove()">Cancel</button><button class="bp" id="confirm-ok" style="padding:7px 18px">Confirm</button></div></div>`; document.body.appendChild(bd); bd.querySelector('#confirm-ok').onclick=()=>{ bd.remove(); onConfirm(); }; bd.addEventListener('click',e=>{ if(e.target===bd)bd.remove(); }); }
-function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,distance:false,altitude:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',distance:'bc',altitude:'tc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'],['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); setOverlayFont('mono', null); setHRStyle('standard',null); setPowerStyle('standard',null); setInfoStyle('list',null); setElevStyle('line',null); setGpsTimeStyle('standard',null); setCoordStyle('standard',null); setCadStyle('standard',null); setArcStyle('ring',null); setGradeStyle('bar',null); setGforceTextPos('center',null); updateSpdMaxSliderUI(); setDistStyle('panel',null); setAltStyle('panel',null);
-document.getElementById('tog-mapnorth').classList.remove('on'); // Reset status global overlay BG ke OFF
-      showOverlayBg = false;
-      document.getElementById('tog-global-bg')?.classList.remove('on');
-      document.querySelectorAll('[id^="tog-bg-"]').forEach(el => el.classList.remove('on')); 
-	  document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on')); 
-	  document.querySelector('.sw[style*="#fff"]')?.classList.add('on'); 
-	  document.getElementById('canvasWrapper').style.background=bgColor; (function(){ const{W,H}=resWH(); canvas.width=W; canvas.height=H; })(); 
-	  document.getElementById('opVal').textContent='0%'; 
-	  document.getElementById('fsVal').textContent='2.20×'; 
-	  document.getElementById('fs-slider').value=220; 
-	  document.querySelectorAll('.chip').forEach(b=>{ const oc=b.getAttribute('onclick'); if(oc&&oc.startsWith('setFS(')){ b.classList.toggle('on', oc==="setFS('xxl',this)"); } }); if(window._dragHandle)window._dragHandle.updateHandles(); if(gpxData)drawFrame(curFrame); notif('Reset to default settings'); }); }
+function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,distance:false,altitude:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',distance:'bc',altitude:'tc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'],['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); setOverlayFont('mono', null); setHRStyle('standard',null); setPowerStyle('standard',null); setInfoStyle('list',null); setElevStyle('line',null); setGpsTimeStyle('standard',null); setCoordStyle('standard',null); setCadStyle('standard',null); setArcStyle('ring',null); setGradeStyle('bar',null); setGforceTextPos('center',null); updateSpdMaxSliderUI(); setDistStyle('panel',null); setAltStyle('panel',null); document.getElementById('tog-mapnorth').classList.remove('on'); showOverlayBg = false; document.getElementById('tog-global-bg')?.classList.remove('on'); document.querySelectorAll('[id^="tog-bg-"]').forEach(el => el.classList.remove('on')); document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on')); document.querySelector('.sw[style*="#fff"]')?.classList.add('on'); document.getElementById('canvasWrapper').style.background=bgColor; (function(){ const{W,H}=resWH(); canvas.width=W; canvas.height=H; })(); document.getElementById('opVal').textContent='0%'; document.getElementById('fsVal').textContent='2.20×'; document.getElementById('fs-slider').value=220; document.querySelectorAll('.chip').forEach(b=>{ const oc=b.getAttribute('onclick'); if(oc&&oc.startsWith('setFS(')){ b.classList.toggle('on', oc==="setFS('xxl',this)"); } }); if(window._dragHandle)window._dragHandle.updateHandles(); if(gpxData)drawFrame(curFrame); notif('Reset to default settings'); }); }
 function clearGPX(){ confirmDialog('Clear GPX','Remove the current GPX file and return to the start screen?',()=>{ gpxData=null; curFrame=0; tfS0=0; tfE0=0; playing=false; cancelAnimationFrame(rafId); document.getElementById('btnPlay').textContent='▶'; document.getElementById('statsSection').style.display='none'; document.getElementById('fmtSection').style.display='none'; document.getElementById('rightPanel').style.display='none'; document.getElementById('tfSection').style.display='none'; document.getElementById('playbar').classList.remove('vis'); document.getElementById('vsb').classList.remove('vis'); document.getElementById('emptyState').style.display='flex'; document.getElementById('btnRender').disabled=true; document.getElementById('btnDownload').style.display='none'; document.getElementById('rpWrap').classList.remove('vis'); const dz2=document.getElementById('dropZone'); dz2.classList.remove('loaded'); dz2.querySelector('.drop-title').textContent='Drop .gpx file here'; dz2.querySelector('.drop-sub').textContent='or click to browse'; document.getElementById('fileInput').value=''; const{W,H}=resWH(); ctx.clearRect(0,0,W,H); ctx.fillStyle=bgColor; ctx.fillRect(0,0,W,H); osmTileCache.clear(); vecCache.clear(); if(window._dragHandle)window._dragHandle.updateHandles(); const pbSec=document.getElementById('previewBgSection'); if(pbSec) pbSec.style.display='none'; notif('GPX cleared'); }); }
 
 // ═══════════════════════════════════════════════════════════
-// MAP UI CONTROLS (BULLETPROOF VERSION)
+// MAP UI CONTROLS
 // ═══════════════════════════════════════════════════════════
 function setMapMode(mode, el){ osmUseOSM = (mode === 'osm'); if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
 function setMapBg(style, el){ mapBgStyle = style; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
@@ -994,7 +864,6 @@ function setMapSize(sz, el){ osmMapSize = sz; if(el && el.closest('.chips')) { e
 function setOsmStyle(style, el){ osmStyle = style; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
 function setOsmZoom(z){ osmZoom = parseInt(z); const zl = document.getElementById('osmZoomVal'); if(zl) zl.textContent = z; drawFrame(curFrame); }
 function setOsmTint(tint, el){ osmTint = tint; if(el && el.closest('.chips')) { el.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('on')); el.classList.add('on'); } drawFrame(curFrame); }
-
 function toggleMapRoute(row){ osmShowRoute = !osmShowRoute; const t = document.getElementById('tog-maproute') || (row && row.querySelector('.tt')); if(t) t.classList.toggle('on', osmShowRoute); drawFrame(curFrame); }
 function toggleMapNorth(row){ mapShowNorth = !mapShowNorth; const t = document.getElementById('tog-mapnorth') || (row && row.querySelector('.tt')); if(t) t.classList.toggle('on', mapShowNorth); drawFrame(curFrame); }
 function toggleOsmHeading(row){ osmShowHeading = !osmShowHeading; const t = document.getElementById('tog-osmheading') || (row && row.querySelector('.tt')); if(t) t.classList.toggle('on', osmShowHeading); drawFrame(curFrame); }
@@ -1017,17 +886,14 @@ document.addEventListener('click', e=>{ const panel=document.getElementById('not
 
 // Init
 document.getElementById('canvasWrapper').style.background=bgColor;
-
 const _initW = canvas.width || 1920;
 const _initH = canvas.height || 1080;
-ctx.fillStyle = bgColor; // bgColor mengambil nilai '#00b140' dari state.js
+ctx.fillStyle = bgColor;
 ctx.fillRect(0, 0, _initW, _initH);
-
 
 // ═══════════════════════════════════════════════════════════
 // PREVIEW BACKGROUND IMAGE HANDLERS
 // ═══════════════════════════════════════════════════════════
-
 function loadPreviewBgImage(input){
   const file = input.files[0];
   if(!file) return;
@@ -1051,14 +917,12 @@ function loadPreviewBgImage(input){
   };
   reader.readAsDataURL(file);
 }
-
 function togglePreviewBgEnabled(row){
   previewBgEnabled = !previewBgEnabled;
   const tog = document.getElementById('tog-preview-bg-enabled');
   if(tog) tog.classList.toggle('on', previewBgEnabled);
   drawFrame(curFrame);
 }
-
 function setPreviewBgFit(mode, el){
   previewBgFit = mode;
   const chips = document.getElementById('previewBgFitChips');
@@ -1066,14 +930,12 @@ function setPreviewBgFit(mode, el){
   if(el) el.classList.add('on');
   drawFrame(curFrame);
 }
-
 function togglePreviewBgExport(row){
   previewBgIncludeExport = !previewBgIncludeExport;
   const tog = document.getElementById('tog-preview-bg-export');
   if(tog) tog.classList.toggle('on', previewBgIncludeExport);
   notif(previewBgIncludeExport ? 'Background image: included in export' : 'Background image: preview only');
 }
-
 function clearPreviewBg(){
   previewBgImage = null;
   previewBgEnabled = false;
@@ -1093,17 +955,14 @@ function clearPreviewBg(){
   notif('Preview background removed');
 }
 
-
 // ═══════════════════════════════════════════════════════════
 // OVERLAY FONT
 // ═══════════════════════════════════════════════════════════
 function setOverlayFont(font, el){
   overlayFont = font;
-  // Sync semua chip font (ada di beberapa div group, bukan hanya #overlay-font-chips)
   document.querySelectorAll('[id^="ofnt-"]').forEach(b => b.classList.remove('on'));
   const active = document.getElementById('ofnt-' + font);
   if(active) active.classList.add('on');
-  // Update live preview box
   const fam = OVERLAY_FONTS[font]?.family || OVERLAY_FONTS.mono.family;
   const prev = document.getElementById('font-preview-text');
   if(prev) prev.style.fontFamily = fam;
@@ -1135,13 +994,11 @@ function loadCustomWatermark(input){
   };
   reader.readAsDataURL(file);
 }
-
 function setWmOpacity(v){
   customWatermarkOpacity = parseInt(v)/100;
   document.getElementById('wmOpacityVal').textContent = v+'%';
   drawFrame(curFrame);
 }
-
 function clearCustomWatermark(){
   customWatermarkImage = null;
   customWatermarkOpacity = 1.0;

@@ -86,7 +86,20 @@ function updateTFUI(){
   if(p0.time&&pts[0].time)s0=(p0.time-pts[0].time)/1000;
   if(p1.time&&pts[0].time)e0=(p1.time-pts[0].time)/1000;
   if(!p0.time){s0=tfS0;e0=tfE0}
-  document.getElementById('tfST').textContent=fmtTime(s0); document.getElementById('tfET').textContent=fmtTime(e0);
+  
+  // Fungsi format jam aktual GPS
+  function getGpsTimeStr(dateObj) {
+    if (!dateObj) return '';
+    const hh = String(dateObj.getHours()).padStart(2, '0');
+    const mm = String(dateObj.getMinutes()).padStart(2, '0');
+    const ss = String(dateObj.getSeconds()).padStart(2, '0');
+    return ` (${hh}:${mm}:${ss})`;
+  }
+
+  // Gabungkan durasi dengan jam aktual
+  document.getElementById('tfST').textContent = fmtTime(s0) + getGpsTimeStr(p0.time); 
+  document.getElementById('tfET').textContent = fmtTime(e0) + getGpsTimeStr(p1.time);
+  
   const dur=(e0-s0)/60; document.getElementById('tfDur').textContent=dur.toFixed(1)+' min';
   document.getElementById('tfPts').textContent=(tfE0-tfS0+1)+' pts';
   document.getElementById('tfBox').classList.toggle('active',tfS0>0||tfE0<n);
@@ -152,6 +165,28 @@ function playLoop(ts){
   rafId=requestAnimationFrame(playLoop);
 }
 function updScrub(sec){ document.getElementById('scrubber').value=curFrame; if(sec!=null) document.getElementById('timeDisplay').textContent=fmtTime(sec); else{ const pt=gpxData.points[curFrame]; const t0=gpxData.points[tfS0].time; const s=pt.time&&t0?(pt.time-t0)/1000:(curFrame-tfS0); document.getElementById('timeDisplay').textContent=fmtTime(s); } }
+function updScrub(sec){ 
+  document.getElementById('scrubber').value=curFrame; 
+  
+  // --- TAMBAHAN: Update posisi garis playhead di Timeframe ---
+  const ph = document.getElementById('tfPlayhead');
+  if(ph && gpxData) {
+    const n = gpxData.points.length - 1;
+    ph.style.display = 'block';
+    // Menghitung persentase posisi saat ini terhadap total frame
+    ph.style.left = (curFrame / n * 100) + '%';
+  }
+  // -----------------------------------------------------------
+
+  if(sec!=null) {
+    document.getElementById('timeDisplay').textContent=fmtTime(sec); 
+  } else { 
+    const pt=gpxData.points[curFrame]; 
+    const t0=gpxData.points[tfS0]?.time; 
+    const s=pt?.time&&t0?(pt.time-t0)/1000:(curFrame-tfS0); 
+    document.getElementById('timeDisplay').textContent=fmtTime(s); 
+  } 
+}
 function drawFrameInterp(idx,frac){ if(!gpxData){drawFrame(idx);return;} const ipt=interpPoint(gpxData.points,idx,frac); drawFrameWithPt(idx,ipt); }
 
 // ═══════════════════════════════════════════════════════════

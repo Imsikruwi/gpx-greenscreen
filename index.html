@@ -249,13 +249,19 @@
 
 <div class="preview-center" id="centerPanel">
 
-  <div id="tfSection" style="display:none;width:100%;max-width:800px">
+	<div id="tfSection" style="display:none;width:100%;max-width:800px">
     <div class="tf-box" id="tfBox">
       <div class="tf-hdr">
         <span class="tf-ttl">Select Timeframe</span>
         <button class="tf-rst" onclick="resetTF()">Reset</button>
       </div>
-      <div class="tf-chart"><canvas id="tfCanvas" height="48"></canvas></div>
+      
+      <div class="tf-chart" style="position: relative;">
+        <canvas id="tfCanvas" height="48"></canvas>
+        
+        <div id="tfPlayhead" style="position:absolute; top:0; bottom:-24px; left:0; width:2px; background:#ff4444; z-index:10; pointer-events:none; display:none; box-shadow: 0 0 6px rgba(255,68,68,0.9);"></div>
+      </div>
+      
       <div class="dr-wrap" id="drWrap">
         <div id="rTrack"><div id="rHL"></div></div>
         <div id="tfMid" title="Drag to shift timeframe"></div>

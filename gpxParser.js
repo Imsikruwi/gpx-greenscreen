@@ -51,9 +51,27 @@ function parseGPX(xml,fname){
       points[i].speed_ms=dt>0?d/dt:0;
     } else {points[i].speed_ms=d}
   }
-  // Smooth speed
-  for(let i=1;i<points.length-1;i++)
-    points[i].speed_ms=(points[i-1].speed_ms+points[i].speed_ms+points[i+1].speed_ms)/3;
+  
+  // 1. Smooth speed (Weighted 5-point moving average: 1-2-3-2-1)
+  const rawSpd = points.map(p => p.speed_ms);
+  for(let i=2; i<points.length-2; i++){
+    const p1 = rawSpd[i-2] || 0;
+    const p2 = rawSpd[i-1] || 0;
+    const p3 = rawSpd[i]   || 0;
+    const p4 = rawSpd[i+1] || 0;
+    const p5 = rawSpd[i+2] || 0;
+    points[i].speed_ms = (p1 + (p2*2) + (p3*3) + (p4*2) + p5) / 9;
+  }
+
+  // 2. Stop Detection (Snap to Zero untuk GPS Drift)
+  const thresholdSpeed = 0.5; // m/s (~1.8 km/h)
+  const thresholdDist  = 2.0; // meter displacement
+  for(let i=2; i<points.length-2; i++){
+    const disp = haversine(points[i-2].lat, points[i-2].lon, points[i+2].lat, points[i+2].lon);
+    if(points[i].speed_ms < thresholdSpeed && disp < thresholdDist){
+      points[i].speed_ms = 0;
+    }
+  }
 
   // Compute heading, grade, g-forces
   for(let i=0;i<points.length;i++){
@@ -149,7 +167,6 @@ function parseGPX(xml,fname){
   document.getElementById('playbar').classList.add('vis');
   document.getElementById('vsb').classList.add('vis');
   document.getElementById('orientBar').classList.add('vis');
-  // Tampilkan section background image
   const pbSec = document.getElementById('previewBgSection');
   if(pbSec) pbSec.style.display = 'flex';
   const fsBtn=document.getElementById('btnFullscreen'); if(fsBtn)fsBtn.style.display='block';

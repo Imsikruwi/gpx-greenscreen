@@ -1,13 +1,13 @@
 // ═══════════════════════════════════════════════════════════
-// OVERLAY DRAWING MODULE
+// OVERLAY DRAWING MODULE (REVISED WITH LOW SPEED CUTOFF)
 // ═══════════════════════════════════════════════════════════
 
 // Helper untuk mengecek apakah background sedang menyala.
-// Per-overlay toggle selalu override global — bukan fallback.
 function checkBg(key) {
   if(overlayBg[key] !== undefined) return overlayBg[key];
   return showOverlayBg;
 }
+
 // HR Zone color berdasarkan % max BPM
 function hrZoneColor(hr){
   if(hr==null||isNaN(hr)) return textColor;
@@ -20,7 +20,6 @@ function hrZoneColor(hr){
 }
 
 // Hitung threshold spdProg (0-1) untuk kuning dan merah
-// bekerja di kedua mode: pct (% of max) dan speed (fixed m/s)
 function dialThresholds(maxSpd_ms){
   if(dialInputMode==='speed'){
     return {
@@ -39,8 +38,6 @@ function dialArcSolidColor(prog, maxSpd_ms){
   if(prog >= t.yellow) return '#f0a020';
   return null;
 }
-
-
 
 // Base function to draw scrolling Odometer digits
 function drawOdometer(c, value, decimals, x, y, digitW, digitH, fs, textColor, bgAlpha, scale=1){
@@ -69,14 +66,12 @@ function drawOdometer(c, value, decimals, x, y, digitW, digitH, fs, textColor, b
     const ease = scrollFrac < 0.5 ? 2*scrollFrac*scrollFrac : 1 - Math.pow(-2*scrollFrac+2,2)/2;
     const isDecimalDigit = posFromRight < ODO_DEC;
     c.save();
-    // Desimal: background putih; Integer: background hitam solid (tanpa gradasi)
     if(isDecimalDigit){ 
       c.fillStyle = 'rgba(255,255,255,0.95)'; 
     } else { 
       c.fillStyle = 'rgba(0,0,0,0.92)'; 
     }
     c.beginPath(); c.roundRect(cx, y, digitW, digitH, r); c.fill();
-    // Clip untuk scroll
     c.beginPath(); c.roundRect(cx, y, digitW, digitH, r); c.clip();
     c.font = `bold ${Math.round(digitH*0.68)}px ${ovFont()}`; c.textAlign='center'; c.textBaseline='middle';
     const digitColor = isDecimalDigit ? '#000000' : textColor;
@@ -87,7 +82,6 @@ function drawOdometer(c, value, decimals, x, y, digitW, digitH, fs, textColor, b
     } else { 
       c.fillStyle=digitColor; c.globalAlpha=1; c.fillText(String(digit), cx+digitW/2, y+digitH/2); 
     }
-    // Garis tipis atas-bawah sebagai divider
     c.globalAlpha=1; c.strokeStyle='rgba(255,255,255,0.15)'; c.lineWidth=Math.round(fs*0.5);
     c.beginPath(); c.moveTo(cx+2,y); c.lineTo(cx+digitW-2,y); c.stroke(); 
     c.beginPath(); c.moveTo(cx+2,y+digitH); c.lineTo(cx+digitW-2,y+digitH); c.stroke();
@@ -116,8 +110,6 @@ function drawMapOverlay(ctx, pt, points, n, W, H) {
   const hasClip = osmMapShape !== 'none';
   
   ctx.save();
-  
-  // 3. Draw Minimap Background
   if(bgOn && mapBgStyle !== 'trans'){ 
     ctx.fillStyle = bgFill; 
     if(osmMapShape === 'circle'){ 
@@ -135,7 +127,6 @@ function drawMapOverlay(ctx, pt, points, n, W, H) {
     } 
   }
   
-  // 4. Clip area if the shape is circular/rounded
   if(hasClip){ 
     ctx.beginPath(); 
     if(osmMapShape === 'circle') ctx.arc(mX+mS/2, mY+mS/2, mS/2, 0, Math.PI*2);
@@ -238,8 +229,19 @@ function drawMapOverlay(ctx, pt, points, n, W, H) {
 function drawSpeedOverlay(ctx, pt, n, W, H) {
   const fs=ovFS('speed');
   const bgOn = checkBg('speed');
-  const spd=pt.speed_ms; const maxSpd=spdMaxMode==='auto'?gpxData.maxSpeedMs:(spdMaxCustom||gpxData.maxSpeedMs);
-  const spdProg=Math.min(1,Math.max(0,cvtSpd(spd)/cvtSpd(maxSpd))); const distKm=((pt.cumDist-gpxData.points[tfS0].cumDist)/1000); const elevStr=Math.round(pt.ele)+' m';
+  
+  // --- REVISI: LOW SPEED CUTOFF ---
+  // Memaksa kecepatan menjadi 0 jika di bawah 1.1 m/s (sekitar 4 km/jam)
+  let spd = pt.speed_ms;
+  if (spd < 1.1) {
+    spd = 0;
+  }
+  // --------------------------------
+  
+  const maxSpd=spdMaxMode==='auto'?gpxData.maxSpeedMs:(spdMaxCustom||gpxData.maxSpeedMs);
+  const spdProg=Math.min(1,Math.max(0,cvtSpd(spd)/cvtSpd(maxSpd))); 
+  const distKm=((pt.cumDist-gpxData.points[tfS0].cumDist)/1000); 
+  const elevStr=Math.round(pt.ele)+' m';
   
   function drawDistStrip(sx,sy,sw){
     if(!opts.distov) return 0;
@@ -358,10 +360,6 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
     const nTick=10; for(let t=0;t<=nTick;t++){ const tx=bx+(t/nTick)*barW; const isMaj=t%5===0; ctx.strokeStyle=isMaj?'rgba(255,255,255,0.45)':'rgba(255,255,255,0.18)'; ctx.lineWidth=isMaj?Math.round(1.5*fs):Math.round(fs*0.8); ctx.beginPath();ctx.moveTo(tx,by+barH);ctx.lineTo(tx,by+barH+Math.round((isMaj?5:3)*fs));ctx.stroke(); if(isMaj){ const v=Math.round(cvtSpd(maxSpd)*(t/nTick)); ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.35)';ctx.textAlign='center';ctx.textBaseline='top'; ctx.fillText(String(v),tx,by+barH+Math.round(6*fs)); } }
     if(opts.distov){ const dY=py+Math.round(barH+68*fs); const dStr=distKm.toFixed(distDecimals)+' km'; if(bgOn){ ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath();ctx.moveTo(px+6,dY);ctx.lineTo(px+panW-6,dY);ctx.stroke(); } ctx.font=`${Math.round(8*fs)}px ${ovFont()}`; ctx.fillStyle=textColor;ctx.globalAlpha=0.45;ctx.textAlign='left';ctx.textBaseline='middle'; ctx.fillText('DIST',px+Math.round(8*fs),dY+distH/2); ctx.font=`bold ${Math.round(12*fs)}px ${ovFont()}`; ctx.fillStyle=textColor;ctx.globalAlpha=1;ctx.textAlign='right'; ctx.fillText(dStr,px+panW-Math.round(8*fs),dY+distH/2); }
     ctx.restore();
-
-  // ═══════════════════════════════════════════════════════════
-  // DONUT — arc tebal dengan hole di tengah
-  // ═══════════════════════════════════════════════════════════
   } else if(spdStyle==='donut'){
     const R=Math.round(62*fs); const sz=R*2+Math.round(16*fs); const stripH=opts.distov?Math.round(28*fs):0;
     const totalH=sz+stripH; const{x:gx0,y:gy0}=posXY(oPos.speed,W,H,sz,totalH);
@@ -386,10 +384,6 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
     ctx.fillText('0', cx+Math.cos(startA)*(R+arcW), cy+Math.sin(startA)*(R+arcW));
     ctx.fillText(Math.round(cvtSpd(maxSpd)), cx+Math.cos(endA)*(R+arcW), cy+Math.sin(endA)*(R+arcW));
     drawDistStrip(gx0, gy0+sz, sz); ctx.restore();
-
-  // ═══════════════════════════════════════════════════════════
-  // SEGMENTED — arc terbagi blok-blok terpisah
-  // ═══════════════════════════════════════════════════════════
   } else if(spdStyle==='segmented'){
     const R=Math.round(60*fs); const sz=R*2+Math.round(16*fs); const stripH=opts.distov?Math.round(28*fs):0;
     const totalH=sz+stripH; const{x:gx0,y:gy0}=posXY(oPos.speed,W,H,sz,totalH);
@@ -424,10 +418,6 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
     ctx.font=`bold ${Math.round(10*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.globalAlpha=0.6; ctx.textBaseline='top';
     ctx.fillText(spdLabel().toUpperCase(), cx, cy+Math.round(20*fs)); ctx.globalAlpha=1;
     drawDistStrip(gx0, gy0+sz, sz); ctx.restore();
-
-  // ═══════════════════════════════════════════════════════════
-  // NEON — ring gelap dengan glow accent
-  // ═══════════════════════════════════════════════════════════
   } else if(spdStyle==='neon'){
     const R=Math.round(58*fs); const sz=R*2+Math.round(20*fs); const stripH=opts.distov?Math.round(28*fs):0;
     const totalH=sz+stripH; const{x:gx0,y:gy0}=posXY(oPos.speed,W,H,sz,totalH);
@@ -467,10 +457,6 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
     ctx.font=`${Math.round(9*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.textBaseline='top';
     ctx.fillText(spdLabel().toUpperCase(),cx,cy+Math.round(24*fs));
     drawDistStrip(gx0, gy0+sz, sz); ctx.restore();
-
-  // ═══════════════════════════════════════════════════════════
-  // REVLED — strip LED horizontal bergaya motorsport/F1
-  // ═══════════════════════════════════════════════════════════
   } else if(spdStyle==='revled'){
     const nLed=16; const ledW=Math.round(14*fs); const ledH=Math.round(26*fs); const ledGap=Math.round(3*fs);
     const stripW=nLed*(ledW+ledGap)-ledGap; const panH=Math.round(ledH+52*fs);
@@ -511,10 +497,6 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
       ctx.fillText(dStr,px+panW-Math.round(8*fs),dY+distH/2);
     }
     ctx.restore();
-
-  // ═══════════════════════════════════════════════════════════
-  // MINIHUD — angka besar + progress bar tipis
-  // ═══════════════════════════════════════════════════════════
   } else if(spdStyle==='minihud'){
     const numF=Math.round(44*fs); const lblF=Math.round(9*fs); const panW=Math.round(160*fs);
     const distH=opts.distov?Math.round(22*fs):0; const panH=Math.round(numF+lblF*2+18*fs)+distH;
@@ -542,27 +524,19 @@ function drawSpeedOverlay(ctx, pt, n, W, H) {
     }
     ctx.restore();
   } else if(spdStyle==='digital'){
-    // ═══════════════════════════════════════════════════════════
-    // DIGITAL — tampilan teks 7-segment style, menggunakan font DSEG jika ada
-    // ═══════════════════════════════════════════════════════════
     const numF=Math.round(52*fs); const lblF=Math.round(9*fs); const panW=Math.round(180*fs);
     const distH=opts.distov?Math.round(22*fs):0; const panH=Math.round(numF+lblF+22*fs)+distH;
     const{x:px,y:py}=posXY(oPos.speed,W,H,panW,panH);
     const _dialCol=dialArcSolidColor(spdProg,maxSpd); const accentCol=_dialCol||textColor;
     ctx.save();
-    // Dark panel ala digital display
     if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(px,py,panW,panH,Math.round(4*fs)); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=Math.round(fs*0.6); ctx.beginPath(); ctx.roundRect(px,py,panW,panH,Math.round(4*fs)); ctx.stroke(); }
-    // Ghost digits (max value hint)
     const maxStr=fmtSpd(maxSpd);
     ctx.font=`bold ${numF}px 'DSEG7 Classic', ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.05)';
     ctx.textAlign='right'; ctx.textBaseline='top'; ctx.fillText(maxStr, px+panW-Math.round(10*fs), py+lblF+Math.round(8*fs));
-    // Actual speed number
     ctx.fillStyle=accentCol; ctx.fillText(fmtSpd(spd), px+panW-Math.round(10*fs), py+lblF+Math.round(8*fs));
-    // Label
     ctx.font=`${lblF}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.textAlign='left'; ctx.textBaseline='top';
     ctx.fillText('SPEED', px+Math.round(10*fs), py+Math.round(7*fs));
     ctx.textAlign='right'; ctx.fillText(spdLabel().toUpperCase(), px+panW-Math.round(10*fs), py+Math.round(7*fs));
-    // Thin divider line
     ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=Math.round(fs*0.5);
     ctx.beginPath(); ctx.moveTo(px+Math.round(8*fs),py+lblF+numF+Math.round(12*fs)); ctx.lineTo(px+panW-Math.round(8*fs),py+lblF+numF+Math.round(12*fs)); ctx.stroke();
     if(opts.distov){
@@ -586,7 +560,6 @@ function drawInfoOverlay(ctx, pt, n, W, H) {
   ctx.save();
 
   if(infoStyle==='hrow'){
-    // ── Horizontal Row: semua stat dalam satu baris ──
     const cols=[
       ['DIST', distKm.toFixed(2)+' km'],
       ['ELEV', Math.round(pt.ele)+' m'],
@@ -606,7 +579,6 @@ function drawInfoOverlay(ctx, pt, n, W, H) {
     });
 
   } else if(infoStyle==='stacked'){
-    // ── Stacked Cards: dua kartu 2×2 ──
     const cardW=Math.round(120*fs); const cardH=Math.round(46*fs); const gap=Math.round(4*fs);
     const panW=cardW*2+gap; const panH=cardH*2+gap;
     const{x:px,y:py}=posXY(oPos.info,W,H,panW,panH);
@@ -626,7 +598,6 @@ function drawInfoOverlay(ctx, pt, n, W, H) {
     });
 
   } else {
-    // ── List (default): vertikal klasik ──
     const pw=Math.round(210*fs),ph=Math.round(118*fs);
     const{x:px,y:py}=posXY(oPos.info,W,H,pw,ph);
     if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath();ctx.roundRect(px,py,pw,ph,10);ctx.fill(); }
@@ -643,7 +614,6 @@ function drawArcOverlay(ctx, prog, W, H) {
   ctx.save();
 
   if(arcStyle==='hbar'){
-    // ── Horizontal progress bar ──
     const panW=Math.round(200*fs), panH=Math.round(38*fs);
     const{x:px,y:py}=posXY(oPos.arc,W,H,panW,panH);
     if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(px,py,panW,panH,Math.round(5*fs)); ctx.fill(); }
@@ -654,7 +624,6 @@ function drawArcOverlay(ctx, prog, W, H) {
     ctx.font=`bold ${Math.round(11*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.textAlign='right'; ctx.textBaseline='top'; ctx.fillText(Math.round(prog*100)+'%', px+panW-Math.round(8*fs), py+Math.round(6*fs));
 
   } else if(arcStyle==='steps'){
-    // ── Step dots: N dots, rampung di-fill ──
     const nSteps=10; const dotR=Math.round(5*fs); const gap=Math.round(8*fs);
     const panW=(nSteps*(dotR*2+gap))-gap+Math.round(16*fs); const panH=dotR*2+Math.round(20*fs);
     const{x:px,y:py}=posXY(oPos.arc,W,H,panW,panH);
@@ -672,7 +641,6 @@ function drawArcOverlay(ctx, prog, W, H) {
     ctx.font=`bold ${Math.round(10*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(Math.round(prog*100)+'%', px+panW/2, py+Math.round(4*fs));
 
   } else {
-    // ── Ring (default) ──
     const ar=Math.round(52*fs),asz=ar*2+4; const{x:ax0,y:ay0}=posXY(oPos.arc,W,H,asz,asz); const ax=ax0+ar+2,ay=ay0+ar+2;
     if(bgOn){
       ctx.beginPath();ctx.arc(ax,ay,ar,0,Math.PI*2); ctx.fillStyle=`rgba(0,0,0,${panelOp})`;ctx.fill();
@@ -703,7 +671,6 @@ function drawGpsTimeOverlay(ctx, pt, W, H) {
   }
 
   if(timeStyle==='minimal'){
-    // ── Minimal: hanya teks tanpa panel, dengan label kecil di atas ──
     const bigF=Math.round(26*fs), lblF=Math.round(8*fs);
     ctx.font=`bold ${bigF}px ${ovFont()}`; const tw=ctx.measureText(ts).width;
     const bw=Math.max(tw+Math.round(16*fs),Math.round(120*fs));
@@ -714,14 +681,12 @@ function drawGpsTimeOverlay(ctx, pt, W, H) {
     ctx.globalAlpha=1;
     ctx.font=`bold ${bigF}px ${ovFont()}`; ctx.fillStyle=textColor;
     ctx.textBaseline='top'; ctx.fillText(ts, gx, gy+lblF+Math.round(2*fs));
-    // Underline
     ctx.strokeStyle=textColor; ctx.globalAlpha=0.3; ctx.lineWidth=Math.round(fs*0.6);
     ctx.beginPath(); ctx.moveTo(gx,gy+lblF+bigF+Math.round(5*fs)); ctx.lineTo(gx+tw,gy+lblF+bigF+Math.round(5*fs)); ctx.stroke();
     ctx.globalAlpha=1;
     if(gpsShowDate&&ds){ ctx.font=`${lblF}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.globalAlpha=0.45; ctx.textBaseline='top'; ctx.fillText(ds,gx,gy+lblF+bigF+Math.round(8*fs)); }
 
   } else if(timeStyle==='pill'){
-    // ── Pill: kompak rounded pill, jam + label kecil di kiri ──
     const bigF=Math.round(22*fs), lblF=Math.round(7*fs);
     ctx.font=`bold ${bigF}px ${ovFont()}`; const tw=ctx.measureText(ts).width;
     const lblW=Math.round(34*fs); const pad=Math.round(10*fs);
@@ -741,7 +706,6 @@ function drawGpsTimeOverlay(ctx, pt, W, H) {
     }
 
   } else {
-    // ── Standard (default) ──
     const bigF=Math.round(30*fs),smF=Math.round(12*fs);
     ctx.font=`bold ${bigF}px ${ovFont()}`; const tw=ctx.measureText(ts).width;
     const bw=Math.max(tw+Math.round(28*fs),Math.round(180*fs)); const bh=gpsShowDate?Math.round(58*fs):Math.round(42*fs);
@@ -763,7 +727,6 @@ function drawCoordsOverlay(ctx, pt, W, H) {
   const lonStr = coordFmt==='dms' ? toDMS(pt.lon,false) : toDD(pt.lon,false);
 
   if(coordStyle==='compact'){
-    // ── Compact: dua baris pendek tanpa icon, font lebih kecil ──
     const lineF=Math.round(11*fs); const pad=Math.round(8*fs); const lineGap=Math.round(3*fs);
     ctx.font=`${lineF}px ${ovFont()}`;
     const latW=ctx.measureText(latStr).width; const lonW=ctx.measureText(lonStr).width;
@@ -776,7 +739,6 @@ function drawCoordsOverlay(ctx, pt, W, H) {
     ctx.globalAlpha=1;
 
   } else if(coordStyle==='badge'){
-    // ── Badge: dua pill terpisah LAT / LON ──
     const lineF=Math.round(12*fs); const pad=Math.round(9*fs); const lblF=Math.round(7*fs); const gap=Math.round(4*fs);
     ctx.font=`${lineF}px ${ovFont()}`;
     const latW=ctx.measureText(latStr).width; const lonW=ctx.measureText(lonStr).width;
@@ -791,7 +753,6 @@ function drawCoordsOverlay(ctx, pt, W, H) {
     });
 
   } else {
-    // ── Standard (default) ──
     const lineF=Math.round(15*fs); const pad=Math.round(12*fs); const iconW=coordShowIcon?Math.round(26*fs):0; const lineGap=Math.round(4*fs);
     ctx.font=`bold ${lineF}px ${ovFont()}`; const latW=ctx.measureText(latStr).width; const lonW=ctx.measureText(lonStr).width; const textW=Math.max(latW,lonW); const boxW=iconW+textW+pad*2+(iconW>0?Math.round(6*fs):0); const boxH=lineF*2+lineGap+pad*2;
     const{x:cx,y:cy}=posXY(oPos.coords,W,H,boxW,boxH);
@@ -882,12 +843,10 @@ function drawCompassOverlay(ctx, pt, W, H) {
   const fs=ovFS('compass'); const bgOn = checkBg('compass'); const hdg=pt.heading||0; const dirs=['N','NE','E','SE','S','SW','W','NW']; 
   ctx.save(); 
   if(window._compassStyle==='arrow'){
-    // ── Arrow: jarum minimalis + derajat ──
     const sz=Math.round(80*fs); const{x:ax,y:ay}=posXY(oPos.compass,W,H,sz,sz);
     const cx=ax+sz/2, cy=ay+sz/2, R=sz/2-Math.round(6*fs);
     if(bgOn){ ctx.beginPath(); ctx.arc(cx,cy,R+Math.round(4*fs),0,Math.PI*2); ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.fill(); }
     ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=Math.round(fs*0.8); ctx.stroke();
-    // Jarum N (merah)
     const hdgR=(hdg-90)*Math.PI/180;
     const nx=cx+Math.cos(hdgR)*R*0.72, ny=cy+Math.sin(hdgR)*R*0.72;
     const sx=cx-Math.cos(hdgR)*R*0.4, sy=cy-Math.sin(hdgR)*R*0.4;
@@ -898,17 +857,14 @@ function drawCompassOverlay(ctx, pt, W, H) {
     ctx.lineTo(sx,sy); ctx.lineTo(cx+Math.cos(hdgR+Math.PI/2)*Math.round(3.5*fs),cy+Math.sin(hdgR+Math.PI/2)*Math.round(3.5*fs));
     ctx.closePath(); ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.fill();
     ctx.beginPath(); ctx.arc(cx,cy,Math.round(3*fs),0,Math.PI*2); ctx.fillStyle=textColor; ctx.fill();
-    // Degree + cardinal
     const cardinal=['N','NE','E','SE','S','SW','W','NW'][Math.round(((hdg%360)+360)%360/45)%8];
     ctx.font=`bold ${Math.round(9*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.textAlign='center'; ctx.textBaseline='bottom';
     ctx.fillText(Math.round(hdg)+'° '+cardinal, cx, ay+sz-Math.round(3*fs));
 
   } else if(window._compassStyle==='digital'){
-    // ── Digital: heading besar + cardinal indicator bar ──
     const panW=Math.round(140*fs), panH=Math.round(56*fs);
     const{x:dx,y:dy}=posXY(oPos.compass,W,H,panW,panH);
     if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${Math.min(0.92,panelOp+0.2)})`; ctx.beginPath(); ctx.roundRect(dx,dy,panW,panH,Math.round(6*fs)); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath(); ctx.roundRect(dx,dy,panW,panH,Math.round(6*fs)); ctx.stroke(); }
-    // Big degree number
     const hdgStr=Math.round(hdg).toString().padStart(3,'0');
     ctx.font=`bold ${Math.round(30*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.textAlign='left'; ctx.textBaseline='top';
     ctx.fillText(hdgStr, dx+Math.round(10*fs), dy+Math.round(8*fs));
@@ -916,41 +872,9 @@ function drawCompassOverlay(ctx, pt, W, H) {
     ctx.font=`bold ${Math.round(12*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.globalAlpha=0.5; ctx.textBaseline='bottom';
     ctx.fillText('°', dx+Math.round(10*fs)+numW+Math.round(2*fs), dy+Math.round(8*fs)+Math.round(30*fs));
     ctx.globalAlpha=1;
-    // Cardinal
     const cardStr=['N','NE','E','SE','S','SW','W','NW'][Math.round(((hdg%360)+360)%360/45)%8];
     ctx.font=`bold ${Math.round(18*fs)}px ${ovFont()}`; ctx.fillStyle='#ff4444'; ctx.textAlign='right'; ctx.textBaseline='top';
     ctx.fillText(cardStr, dx+panW-Math.round(10*fs), dy+Math.round(10*fs));
-    // Mini tick bar at bottom
-    const tickY=dy+panH-Math.round(12*fs); const tickW=panW-Math.round(16*fs); const tickX=dx+Math.round(8*fs);
-    const ctrX=tickX+tickW/2;
-    for(let deg=Math.floor(hdg/5)*5-30;deg<=hdg+30;deg+=5){
-      const x=ctrX+(deg-hdg)*(tickW/60);
-      if(x<tickX||x>tickX+tickW) continue;
-      const isMaj=deg%45===0, isCard=deg%90===0;
-      const th=isCard?Math.round(8*fs):isMaj?Math.round(5*fs):Math.round(3*fs);
-      ctx.fillStyle=isCard?textColor:'rgba(255,255,255,0.4)';
-      ctx.fillRect(x-Math.round(fs*0.4), tickY, Math.round(fs*0.8), th);
-    }
-    ctx.fillStyle=textColor; ctx.beginPath(); ctx.moveTo(ctrX,tickY-2); ctx.lineTo(ctrX-Math.round(3*fs),tickY-Math.round(5*fs)); ctx.lineTo(ctrX+Math.round(3*fs),tickY-Math.round(5*fs)); ctx.closePath(); ctx.fill();
-
-  } else if(window._compassStyle==='digital'){
-    // ── Digital: heading besar + cardinal indicator bar ──
-    const panW=Math.round(140*fs), panH=Math.round(56*fs);
-    const{x:dx,y:dy}=posXY(oPos.compass,W,H,panW,panH);
-    if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${Math.min(0.92,panelOp+0.2)})`; ctx.beginPath(); ctx.roundRect(dx,dy,panW,panH,Math.round(6*fs)); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath(); ctx.roundRect(dx,dy,panW,panH,Math.round(6*fs)); ctx.stroke(); }
-    // Big degree number
-    const hdgStr=Math.round(hdg).toString().padStart(3,'0');
-    ctx.font=`bold ${Math.round(30*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.textAlign='left'; ctx.textBaseline='top';
-    ctx.fillText(hdgStr, dx+Math.round(10*fs), dy+Math.round(8*fs));
-    const numW=ctx.measureText(hdgStr).width;
-    ctx.font=`bold ${Math.round(12*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.globalAlpha=0.5; ctx.textBaseline='bottom';
-    ctx.fillText('°', dx+Math.round(10*fs)+numW+Math.round(2*fs), dy+Math.round(8*fs)+Math.round(30*fs));
-    ctx.globalAlpha=1;
-    // Cardinal
-    const cardStr=['N','NE','E','SE','S','SW','W','NW'][Math.round(((hdg%360)+360)%360/45)%8];
-    ctx.font=`bold ${Math.round(18*fs)}px ${ovFont()}`; ctx.fillStyle='#ff4444'; ctx.textAlign='right'; ctx.textBaseline='top';
-    ctx.fillText(cardStr, dx+panW-Math.round(10*fs), dy+Math.round(10*fs));
-    // Mini tick bar at bottom
     const tickY=dy+panH-Math.round(12*fs); const tickW=panW-Math.round(16*fs); const tickX=dx+Math.round(8*fs);
     const ctrX=tickX+tickW/2;
     for(let deg=Math.floor(hdg/5)*5-30;deg<=hdg+30;deg+=5){
@@ -995,7 +919,6 @@ function drawGradeOverlay(ctx, pt, W, H) {
   ctx.save();
 
   if(gradeStyle==='arc'){
-    // ── Arc gauge: semicircle, center=flat, left=downhill, right=uphill ──
     const R=Math.round(46*fs); const sz=R*2+Math.round(16*fs); const panH=Math.round(R+Math.round(34*fs));
     const{x:gx,y:gy}=posXY(oPos.grade,W,H,sz,panH);
     const cx=gx+sz/2, cy=gy+R+Math.round(8*fs);
@@ -1007,81 +930,65 @@ function drawGradeOverlay(ctx, pt, W, H) {
       ctx.beginPath(); ctx.arc(cx,cy,R+Math.round(6*fs),Math.PI,0,false);
       ctx.lineTo(cx+R+Math.round(6*fs),gy+panH); ctx.lineTo(cx-R-Math.round(6*fs),gy+panH); ctx.closePath(); ctx.stroke();
     }
-    // Track (full semicircle, left to right = -PI to 0)
     ctx.beginPath(); ctx.arc(cx,cy,R,Math.PI,0,false);
     ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=Math.round(8*fs); ctx.lineCap='round'; ctx.stroke();
-    // Fill arc from center towards direction of grade
-    // center = -PI/2 (top). uphill = right (0), downhill = left (PI / -PI)
     const maxG=25; const clampedGrade=Math.max(-maxG,Math.min(maxG,grade));
-    // Map grade to arc: grade +maxG → 0 (right), 0 → -PI/2 (top), -maxG → -PI (left)
     const needleA=-(Math.PI/2)+(clampedGrade/maxG)*(Math.PI/2);
     if(absg>0.3){
-      const fillStart=-Math.PI/2; // center top
+      const fillStart=-Math.PI/2;
       const fillEnd=needleA;
       ctx.beginPath();
       if(isUp){ ctx.arc(cx,cy,R,fillStart,fillEnd,false); }
       else if(isDn){ ctx.arc(cx,cy,R,fillEnd,fillStart,false); }
       ctx.strokeStyle=gradColor; ctx.lineWidth=Math.round(8*fs); ctx.lineCap='round'; ctx.stroke();
     }
-    // Tick marks: -30,-15,0,+15,+30 mapped to angle
     [[-maxG,'L'],[-maxG/2,''],[ 0,'─'],[maxG/2,''],[ maxG,'R']].forEach(([g,lbl])=>{
       const a=-(Math.PI/2)+(g/maxG)*(Math.PI/2);
       const r1=R-Math.round(2*fs), r2=R+Math.round(4*fs);
       ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1); ctx.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);
       ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=Math.round(fs); ctx.lineCap='butt'; ctx.stroke();
     });
-    // Needle
     ctx.save(); ctx.translate(cx,cy); ctx.rotate(needleA);
     ctx.beginPath(); ctx.moveTo(0,-(R-Math.round(10*fs))); ctx.lineTo(-Math.round(3*fs),Math.round(4*fs)); ctx.lineTo(Math.round(3*fs),Math.round(4*fs)); ctx.closePath();
     ctx.fillStyle=gradColor; ctx.fill(); ctx.restore();
     ctx.beginPath(); ctx.arc(cx,cy,Math.round(5*fs),0,Math.PI*2); ctx.fillStyle=textColor; ctx.fill();
     ctx.beginPath(); ctx.arc(cx,cy,Math.round(3*fs),0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fill();
-    // Labels
     ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.textAlign='left'; ctx.textBaseline='middle';
     ctx.fillText('▼', gx+Math.round(4*fs), cy); ctx.textAlign='right'; ctx.fillText('▲', gx+sz-Math.round(4*fs), cy);
-    // Value and label below
     ctx.font=`bold ${Math.round(14*fs)}px ${ovFont()}`; ctx.fillStyle=gradColor; ctx.textAlign='center'; ctx.textBaseline='top';
     ctx.fillText(gradeStr, cx, cy+Math.round(8*fs));
     ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.textBaseline='top';
     ctx.fillText('GRADE', cx, cy+Math.round(22*fs));
 
   } else if(gradeStyle==='road'){
-    // ── Road visual: garis jalan miring + angka ──
     const panW=Math.round(140*fs), panH=Math.round(80*fs);
     const{x:gx,y:gy}=posXY(oPos.grade,W,H,panW,panH);
     if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(gx,gy,panW,panH,Math.round(6*fs)); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath(); ctx.roundRect(gx,gy,panW,panH,Math.round(6*fs)); ctx.stroke(); }
-    // Exaggerated visual angle (cap at 30deg visual)
     const visualAngle=Math.atan2(Math.min(absg,30),100)*(isUp?-1:1);
     const roadW=Math.round(60*fs);
     const roadCX=gx+panW*0.5, roadCY=gy+panH*0.62;
     ctx.save(); ctx.translate(roadCX,roadCY); ctx.rotate(visualAngle);
-    // Road surface
     ctx.fillStyle='rgba(255,255,255,0.12)'; ctx.beginPath(); ctx.roundRect(-roadW/2,-Math.round(5*fs),roadW,Math.round(10*fs),Math.round(3*fs)); ctx.fill();
     ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=Math.round(fs*0.8);
     ctx.beginPath(); ctx.roundRect(-roadW/2,-Math.round(5*fs),roadW,Math.round(10*fs),Math.round(3*fs)); ctx.stroke();
-    // Dashed center line
     if(absg>0.1){ ctx.strokeStyle=gradColor; } else { ctx.strokeStyle='rgba(255,255,255,0.4)'; }
     ctx.lineWidth=Math.round(1.5*fs); ctx.setLineDash([Math.round(6*fs),Math.round(4*fs)]);
     ctx.beginPath(); ctx.moveTo(-roadW/2+Math.round(4*fs),0); ctx.lineTo(roadW/2-Math.round(4*fs),0); ctx.stroke(); ctx.setLineDash([]);
     ctx.restore();
-    // Arrow — placed to the right, points up for uphill, down for downhill
     if(absg>0.3){
       const arrX=gx+panW-Math.round(20*fs), arrY=gy+panH*0.5;
       const arrH=Math.round(14*fs); const arrW=Math.round(8*fs);
       ctx.save(); ctx.translate(arrX,arrY);
-      // Rotate: -PI/2 = up (uphill), PI/2 = down (downhill)
       ctx.rotate(isDn?Math.PI/2:-Math.PI/2);
       ctx.beginPath(); ctx.moveTo(0,-arrH/2); ctx.lineTo(-arrW/2,arrH/4); ctx.lineTo(-arrW/4,arrH/4); ctx.lineTo(-arrW/4,arrH/2); ctx.lineTo(arrW/4,arrH/2); ctx.lineTo(arrW/4,arrH/4); ctx.lineTo(arrW/2,arrH/4); ctx.closePath();
       ctx.fillStyle=gradColor; ctx.fill(); ctx.restore();
     }
-    // Text top-left
     ctx.font=`bold ${Math.round(16*fs)}px ${ovFont()}`; ctx.fillStyle=gradColor; ctx.textAlign='left'; ctx.textBaseline='top';
     ctx.fillText(gradeStr, gx+Math.round(8*fs), gy+Math.round(8*fs));
     ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.textBaseline='top';
     ctx.fillText('GRADE', gx+Math.round(8*fs), gy+Math.round(24*fs));
 
   } else {
-    // ── Bar (default) ──
     const gW=Math.round(140*fs), gH=Math.round(52*fs); const{x:grx,y:gry}=posXY(oPos.grade,W,H,gW,gH);
     if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath();ctx.roundRect(grx,gry,gW,gH,8);ctx.fill(); }
     const barW=gW-Math.round(20*fs), barH=Math.round(5*fs); const bx=grx+Math.round(10*fs), by=gry+gH-Math.round(12*fs); const maxG=15; const fillW=Math.min(1,absg/maxG)*(barW/2);
@@ -1094,7 +1001,6 @@ function drawGradeOverlay(ctx, pt, W, H) {
   ctx.restore();
 }
 
-
 function drawOdometerOverlay(ctx, pt, W, H) {
   const fs=ovFS('odometer'); const bgOn = checkBg('odometer'); 
   const distKmO=((pt.cumDist-gpxData.points[tfS0].cumDist)/1000); 
@@ -1102,7 +1008,6 @@ function drawOdometerOverlay(ctx, pt, W, H) {
   const dW=Math.round(12*fs), dH=Math.round(18*fs); 
   const scaledW=Math.round(dW*odoScale2), scaledH=Math.round(dH*odoScale2); 
   const dotW=Math.round(scaledW*0.45); const pad2=Math.round(2*fs); 
-  // Selalu 3 digit integer + 1 desimal = 4 kolom + 1 titik
   const totalIntDigits = 3;
   const drumsTotalW = totalIntDigits*(scaledW+pad2) + 1*(scaledW+pad2) + dotW + pad2; 
   const kmLblW=Math.round(28*fs); const distLblW=Math.round(30*fs); 
@@ -1116,12 +1021,10 @@ function drawOdometerOverlay(ctx, pt, W, H) {
   } 
   const lfs=Math.round(8*fs); ctx.font=`bold ${lfs}px ${ovFont()}`; ctx.fillStyle=textColor;ctx.globalAlpha=0.55;ctx.textAlign='left';ctx.textBaseline='middle'; ctx.fillText('ODO',ox+Math.round(6*fs),oy+panH/2);ctx.globalAlpha=1; 
   const odoXO=ox+distLblW, odoYO=oy+(panH-scaledH)/2; let cx2=odoXO; const r2=Math.round(3*fs); 
-  // Hitung berapa leading zeros yang perlu digambar (selalu total 3 digit integer)
   const nIntDigits=Math.max(1, String(intPart).length); 
   const leadZeros=Math.max(0, totalIntDigits - nIntDigits); 
   for(let z=0;z<leadZeros;z++){ 
     ctx.save(); 
-    // Hitam solid — tanpa gradasi
     ctx.fillStyle='rgba(0,0,0,0.92)'; 
     ctx.beginPath();ctx.roundRect(cx2,odoYO,scaledW,scaledH,r2);ctx.fill(); 
     ctx.beginPath();ctx.roundRect(cx2,odoYO,scaledW,scaledH,r2);ctx.clip(); 
@@ -1137,7 +1040,6 @@ function drawOdometerOverlay(ctx, pt, W, H) {
   ctx.font=`bold ${Math.round(11*fs)}px ${ovFont()}`; ctx.fillStyle=textColor;ctx.globalAlpha=0.8;ctx.textAlign='left';ctx.textBaseline='middle'; ctx.fillText('km',cx2+usedW+Math.round(5*fs),oy+panH/2);ctx.globalAlpha=1; 
   ctx.restore();
 }
-
 
 function drawHeartrateOverlay(ctx, pt, W, H) {
   const fs=ovFS('heartrate'); const bgOn = checkBg('heartrate'); const hr = pt.hr; const zColor = hrZoneColor(hr); const panW=Math.round(160*fs), panH=Math.round(56*fs); const{x:hx,y:hy}=posXY(oPos.heartrate,W,H,panW,panH); 
@@ -1156,23 +1058,19 @@ function drawCadenceOverlay(ctx, pt, W, H) {
   ctx.save();
 
   if(cadStyle==='ring'){
-    // ── Ring style: donut arc menunjukkan rpm vs max ──
     const cadMax=120; const cadProg=cad!=null?Math.min(1,cad/cadMax):0;
     const R=Math.round(36*fs); const sz=R*2+Math.round(12*fs);
     const{x:cx0,y:cy0}=posXY(oPos.cadence,W,H,sz,sz+Math.round(14*fs));
     const cx=cx0+sz/2, cy=cy0+sz/2;
     const startA=-Math.PI*0.8, sweepA=Math.PI*1.6;
     if(bgOn){ ctx.beginPath(); ctx.arc(cx,cy,R+Math.round(4*fs),0,Math.PI*2); ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.fill(); }
-    // Track
     ctx.beginPath(); ctx.arc(cx,cy,R,startA,startA+sweepA);
     ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=Math.round(7*fs); ctx.lineCap='round'; ctx.stroke();
-    // Fill
     if(cadProg>0.005){
       const cadCol=cad<60?'#888':cad<80?'#4a9ef0':cad<100?'#4af0a0':'#f0d04a';
       ctx.beginPath(); ctx.arc(cx,cy,R,startA,startA+cadProg*sweepA);
       ctx.strokeStyle=cadCol; ctx.lineWidth=Math.round(7*fs); ctx.lineCap='round'; ctx.stroke();
     }
-    // Center text
     const cadStr=cad!=null?String(Math.round(cad)):'--';
     ctx.font=`bold ${Math.round(16*fs)}px ${ovFont()}`; ctx.fillStyle='#4a9ef0';
     ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(cadStr,cx,cy-Math.round(2*fs));
@@ -1181,7 +1079,6 @@ function drawCadenceOverlay(ctx, pt, W, H) {
     ctx.font=`${Math.round(7*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.textBaseline='bottom';
     ctx.fillText('CADENCE',cx,cy0+sz+Math.round(12*fs));
   } else {
-    // ── Standard (default) ──
     const panW=Math.round(150*fs), panH=Math.round(56*fs);
     const{x:cx2,y:cy2}=posXY(oPos.cadence,W,H,panW,panH);
     if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath();ctx.roundRect(cx2,cy2,panW,panH,Math.round(7*fs));ctx.fill(); }
@@ -1205,9 +1102,6 @@ function drawPowerOverlay(ctx, pt, W, H) {
   ctx.restore();
 }
 
-// ═══════════════════════════════════════════════════════════
-// HEART RATE WAVE — angka + garis ECG bergulir dari history GPX
-// ═══════════════════════════════════════════════════════════
 function drawHeartrateWaveOverlay(ctx, pt, n, W, H){
   const fs=ovFS('heartrate'); const bgOn=checkBg('heartrate');
   const hr=pt.hr; const zColor=hrZoneColor(hr);
@@ -1258,9 +1152,6 @@ function drawHeartrateWaveOverlay(ctx, pt, n, W, H){
   ctx.restore();
 }
 
-// ═══════════════════════════════════════════════════════════
-// POWER ARC — arc ganda watt + zona FTP berwarna
-// ═══════════════════════════════════════════════════════════
 function drawPowerArcOverlay(ctx, pt, W, H){
   const fs=ovFS('power'); const bgOn=checkBg('power');
   const pw=pt.power; const pctFTP=(pw!=null&&ftpWatts>0)?pw/ftpWatts:0;
@@ -1298,23 +1189,19 @@ function drawPowerArcOverlay(ctx, pt, W, H){
   ctx.lineTo(cx+Math.cos(ftpA)*(R+Math.round(4*fs)),cy+Math.sin(ftpA)*(R+Math.round(4*fs)));
   ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=Math.round(1.5*fs); ctx.stroke();
   ctx.font=`bold ${Math.round(22*fs)}px ${ovFont()}`; ctx.fillStyle=pwColor; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(pw!=null?String(Math.round(pw)):'--', cx, cy-Math.round(4*fs));
+  ctx.fillText(pw!=null?Math.round(pw):'--', cx, cy-Math.round(4*fs));
   ctx.font=`${Math.round(8*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.textBaseline='top';
   ctx.fillText('W', cx, cy+Math.round(12*fs));
   const tx=cx+R+Math.round(14*fs);
   ctx.font=`bold ${Math.round(9*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.textAlign='left'; ctx.textBaseline='top';
   ctx.fillText('⚡ POWER', tx, py+Math.round(8*fs));
   ctx.font=`bold ${Math.round(16*fs)}px ${ovFont()}`; ctx.fillStyle=pwColor; ctx.textBaseline='top';
-  ctx.fillText(pw!=null?String(Math.round(pw))+'W':'--W', tx, py+Math.round(18*fs));
+  ctx.fillText(pw!=null?Math.round(pw)+'W':'--W', tx, py+Math.round(18*fs));
   ctx.font=`${Math.round(9*fs)}px ${ovFont()}`; ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.textBaseline='top';
   ctx.fillText(pw!=null?Math.round(pctFTP*100)+'% FTP':'-- FTP', tx, py+Math.round(36*fs));
   ctx.restore();
 }
 
-
-// ═══════════════════════════════════════════════════════════
-// DISTANCE OVERLAY — dedicated distance panel (terpisah dari speed)
-// ═══════════════════════════════════════════════════════════
 function drawDistanceOverlay(ctx, pt, W, H) {
   const fs=ovFS('distance'); const bgOn=checkBg('distance');
   const distKm=((pt.cumDist-gpxData.points[tfS0].cumDist)/1000);
@@ -1322,7 +1209,6 @@ function drawDistanceOverlay(ctx, pt, W, H) {
   ctx.save();
 
   if(dStyle==='odo'){
-    // ── Odometer style ──
     const dW=Math.round(12*fs), dH=Math.round(18*fs);
     const scaledW=Math.round(dW*odoScale), scaledH=Math.round(dH*odoScale);
     const dotW=Math.round(scaledW*0.45); const pad2=Math.round(2*fs);
@@ -1351,7 +1237,6 @@ function drawDistanceOverlay(ctx, pt, W, H) {
     ctx.fillText('km',cx2+usedW+Math.round(5*fs),oy+panH/2); ctx.globalAlpha=1;
 
   } else {
-    // ── Panel style (default) ──
     const panW=Math.round(140*fs), panH=Math.round(42*fs);
     const{x:px,y:py}=posXY(oPos.distance,W,H,panW,panH);
     if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(px,py,panW,panH,Math.round(6*fs)); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath(); ctx.roundRect(px,py,panW,panH,Math.round(6*fs)); ctx.stroke(); }
@@ -1364,9 +1249,6 @@ function drawDistanceOverlay(ctx, pt, W, H) {
   ctx.restore();
 }
 
-// ═══════════════════════════════════════════════════════════
-// ALTITUDE OVERLAY — dedicated altitude/elevation panel
-// ═══════════════════════════════════════════════════════════
 function drawAltitudeOverlay(ctx, pt, W, H) {
   const fs=ovFS('altitude'); const bgOn=checkBg('altitude');
   const ele=Math.round(pt.ele); const grade=pt.grade||0;
@@ -1376,7 +1258,6 @@ function drawAltitudeOverlay(ctx, pt, W, H) {
   ctx.save();
 
   if(aStyle==='gauge'){
-    // ── Gauge: arc dari min ke max elevation ──
     const minE=Math.round(gpxData.minEle), maxE=Math.round(gpxData.maxEle);
     const range=maxE-minE||1; const prog=Math.min(1,Math.max(0,(pt.ele-minE)/range));
     const R=Math.round(44*fs); const sz=R*2+Math.round(12*fs);
@@ -1394,7 +1275,6 @@ function drawAltitudeOverlay(ctx, pt, W, H) {
     ctx.fillText((isUp?'▲':isDn?'▼':'─')+' '+grade.toFixed(1)+'%',cx,ay+sz-Math.round(4*fs)); ctx.globalAlpha=1;
 
   } else {
-    // ── Panel style (default) ──
     const panW=Math.round(140*fs), panH=Math.round(42*fs);
     const{x:px,y:py}=posXY(oPos.altitude,W,H,panW,panH);
     if(bgOn){ ctx.fillStyle=`rgba(0,0,0,${panelOp})`; ctx.beginPath(); ctx.roundRect(px,py,panW,panH,Math.round(6*fs)); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=Math.round(fs*0.5); ctx.beginPath(); ctx.roundRect(px,py,panW,panH,Math.round(6*fs)); ctx.stroke(); }
@@ -1402,7 +1282,6 @@ function drawAltitudeOverlay(ctx, pt, W, H) {
     ctx.fillText('ALT', px+Math.round(8*fs), py+Math.round(6*fs));
     ctx.font=`bold ${Math.round(16*fs)}px ${ovFont()}`; ctx.fillStyle=textColor; ctx.globalAlpha=1; ctx.textBaseline='bottom';
     ctx.fillText(ele+' m', px+Math.round(8*fs), py+panH-Math.round(6*fs));
-    // Grade indicator mini
     if(Math.abs(grade)>0.3){
       ctx.font=`${Math.round(8*fs)}px ${ovFont()}`; ctx.fillStyle=gradeColor; ctx.globalAlpha=0.85; ctx.textAlign='right'; ctx.textBaseline='bottom';
       ctx.fillText((isUp?'▲':isDn?'▼':'─')+grade.toFixed(1)+'%', px+panW-Math.round(8*fs), py+panH-Math.round(6*fs));
@@ -1419,27 +1298,23 @@ function drawProgOverlay(ctx, W, H, prog) {
   ctx.restore();
 }
 
-// Ensure Watermark function is here (Outside other functions)
 function drawWatermarkOverlay(ctx, W, H) {
   const fs = ovFS('watermark');
   ctx.save();
   ctx.globalAlpha = customWatermarkOpacity;
 
   if(customWatermarkImage && customWatermarkImage.complete && customWatermarkImage.naturalWidth > 0){
-    // ── Custom logo image ──
     const img = customWatermarkImage;
     const iw = img.naturalWidth, ih = img.naturalHeight;
     const maxH = Math.round(60 * fs);
     const dw = Math.round(iw * (maxH / ih));
     const dh = maxH;
     const {x, y} = posXY(oPos.watermark, W, H, dw, dh);
-    // Drop shadow
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = Math.round(4*fs);
     ctx.shadowOffsetY = Math.round(1*fs);
     ctx.drawImage(img, x, y, dw, dh);
   } else {
-    // ── Default text watermark ──
     const text = "GPXGreenscreen";
     ctx.font = `800 ${Math.round(24*fs)}px 'Syne', sans-serif`;
     if('letterSpacing' in ctx) ctx.letterSpacing = `-${Math.round(0.8*fs)}px`;

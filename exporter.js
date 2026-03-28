@@ -2,7 +2,7 @@
 // EXPORTER MODULE (MP4 & ZIP)
 // ═══════════════════════════════════════════════════════════
 
-// --- TAMBAHAN: WAKE LOCK API (Mencegah Layar Mati & Throttling) ---
+// --- WAKE LOCK API (Mencegah Layar Mati & Throttling) ---
 let wakeLock = null;
 
 async function requestWakeLock() {
@@ -25,16 +25,14 @@ function releaseWakeLock() {
   }
 }
 
-// Jika pengguna berpindah tab lalu kembali, OS mungkin memutus Wake Lock.
-// Kita harus memintanya kembali jika proses render masih berjalan.
 document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState === 'visible' && isRendering) {
+  if (document.visibilityState === 'visible' && isRendering && !renderPaused) {
     await requestWakeLock();
   }
 });
 // ------------------------------------------------------------------
 
-// --- TAMBAHAN: Proteksi Tutup Tab (Lebih dari 1 menit) ---
+// --- Proteksi Tutup Tab (Lebih dari 1 menit) ---
 window.addEventListener('beforeunload', function (e) {
   if (isRendering && window._renderStartTime) {
     const elapsedSec = (Date.now() - window._renderStartTime) / 1000;
@@ -99,7 +97,7 @@ function togglePauseRender() {
     const pausedDuration = Date.now() - pauseStartTime;
     window._renderStartTime += pausedDuration; // Offset waktu mulai agar ETA tidak rusak
     notif('Render resumed', '#4af0a0');
-    requestWakeLock(); // Tahan layar kembali
+    requestWakeLock(); // Tahan layar kembali (dipicu dari klik user)
   }
 }
 
@@ -157,9 +155,24 @@ function fetchVecDataSync(bbox, cacheKey){
   return fetchVecData(bbox, cacheKey);
 }
 
+// Helper untuk yield event loop agar tidak memblokir UI thread, tapi tidak kena throttle setTimeout saat tab idle
+function renderYield() {
+  return new Promise(resolve => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve());
+    } else {
+      setTimeout(resolve, 0);
+    }
+  });
+}
+
+
 async function startRender(){
   if(!gpxData) { notif('Tolong muat file GPX terlebih dahulu', '#f0a04a'); return; }
   if(isRendering) return; 
+  
+  // Tahan Layar SEGERA setelah tombol diklik (jangan tunggu fungsi async apa pun)
+  requestWakeLock();
   
   const idx=buildFrameIndices();
   const nf=idx.length;
@@ -167,10 +180,12 @@ async function startRender(){
   if (!_skipWarnCheck) {
     if (renderFmt === 'zip' && nf > 5000) {
       showWarnPopup(nf, 'zip');
+      releaseWakeLock(); // Lepas kunci jika batal
       return;
     }
     if (renderFmt === 'mp4' && nf > 30000) {
       showWarnPopup(nf, 'mp4');
+      releaseWakeLock(); // Lepas kunci jika popup muncul
       return;
     }
   }
@@ -179,6 +194,7 @@ async function startRender(){
 
   if(renderFmt==='mp4'&&typeof VideoEncoder==='undefined'){
     notif('WebCodecs API not available. Use Chrome 94+, Edge 94+, or Safari 16.4+','#ff5c5c');
+    releaseWakeLock();
     return;
   }
 
@@ -194,9 +210,6 @@ async function startRender(){
   notif('⏳ Render started — '+window._renderFrameCount.toLocaleString()+' frames · '+fpsVal+' fps','#f0a04a');
   playing=false; cancelAnimationFrame(rafId);
   
-  // Tahan Layar agar tidak mati
-  requestWakeLock();
-
   // ── RESET UI RENDER BUTTONS (FORCED VISIBILITY) ──
   document.getElementById('btnPlay').textContent='▶';
   document.getElementById('btnRender').disabled=true;
@@ -467,7 +480,7 @@ async function renderMP4(idx,nf){
   const bitrate=bitrateVal*1000;
 
   rpSet(1,'Detecting codec support...','Checking H.264, VP9, VP8...',true);
-  await new Promise(r=>setTimeout(r,0));
+  await renderYield();
 
   const codec=await detectCodec(W,H);
   if(!codec){
@@ -476,7 +489,7 @@ async function renderMP4(idx,nf){
   }
 
   rpSet(3,'Codec: '+codec.label,'Encoding at '+bitrateVal+' kbps...',true);
-  await new Promise(r=>setTimeout(r,0));
+  await renderYield();
 
   const chunks=[]; 
   let encErr=null;
@@ -500,6 +513,7 @@ async function renderMP4(idx,nf){
   for(let k=0;k<nf;k++){
     if(encErr) break;
 
+    // Loop Pause
     while(renderPaused) {
       if(renderCancelled) break;
       await new Promise(r => setTimeout(r, 100));
@@ -553,7 +567,7 @@ async function renderMP4(idx,nf){
         }, 5);
       });
     } else {
-      await new Promise(r => setTimeout(r, 0));
+      await renderYield(); // Menggunakan requestAnimationFrame hack agar tidak throttled
     }
 
     const pct=3+(k/nf)*88;
@@ -579,7 +593,7 @@ async function renderMP4(idx,nf){
   encoder.close();
 
   rpSet(96,'Muxing container...','Building '+codec.fmt.toUpperCase()+'...',true);
-  await new Promise(r=>setTimeout(r,20));
+  await renderYield();
 
   let outBytes;
   try{
@@ -708,12 +722,12 @@ async function renderZIP(idx,nf){
           }, 'image/png');
         });
 
-        await new Promise(r => setTimeout(r, 2));
+        await renderYield(); // Menggunakan renderYield untuk mencegah throttling
         done++;
     }
     const pct=(done/nf)*88;
     rpSet(pct,'Rendering frame '+done+'/'+nf,'PNG sequence · '+fpsVal+' fps');
-    if(done<nf){await new Promise(r=>setTimeout(r,0));await chunk(end);return}
+    if(done<nf){await renderYield();await chunk(end);return}
 
     rpSet(90,'Packing ZIP...','Compressing '+done+' PNG files...');
     const base=(gpxData?.fname||'activity').replace('.gpx','');
@@ -766,7 +780,7 @@ function resetRenderUI(){
   renderCancelled=false;
   renderPaused=false;
   
-  releaseWakeLock();
+  releaseWakeLock(); // Buka kunci layar setelah selesai atau batal
 
   document.getElementById('btnRender').disabled=false;
   document.getElementById('btnRender').textContent='▶ RENDER';
@@ -886,6 +900,10 @@ let _skipWarnCheck=false;
 function startRenderConfirmed(){
   _skipWarnCheck=true;
   closeWarnPopup(); 
+  
+  // Tahan Layar SEGERA setelah peringatan disetujui
+  requestWakeLock();
+  
   startRender();
 }
 

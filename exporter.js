@@ -2,6 +2,38 @@
 // EXPORTER MODULE (MP4 & ZIP)
 // ═══════════════════════════════════════════════════════════
 
+// --- TAMBAHAN: WAKE LOCK API (Mencegah Layar Mati & Throttling) ---
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock is active');
+    } catch (err) {
+      console.warn(`Wake Lock error: ${err.message}`);
+    }
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock !== null) {
+    wakeLock.release().then(() => {
+      wakeLock = null;
+      console.log('Wake Lock released');
+    });
+  }
+}
+
+// Jika pengguna berpindah tab lalu kembali, OS mungkin memutus Wake Lock.
+// Kita harus memintanya kembali jika proses render masih berjalan.
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && isRendering) {
+    await requestWakeLock();
+  }
+});
+// ------------------------------------------------------------------
+
 // --- TAMBAHAN: Proteksi Tutup Tab (Lebih dari 1 menit) ---
 window.addEventListener('beforeunload', function (e) {
   if (isRendering && window._renderStartTime) {
@@ -61,11 +93,13 @@ function togglePauseRender() {
     pauseStartTime = Date.now();
     notif('Render paused', '#f0d04a');
     document.getElementById('rpStage').textContent = 'Paused...';
+    releaseWakeLock(); // Lepaskan penahan layar saat dipause
   } else {
     btn.textContent = '⏸ Pause';
     const pausedDuration = Date.now() - pauseStartTime;
     window._renderStartTime += pausedDuration; // Offset waktu mulai agar ETA tidak rusak
     notif('Render resumed', '#4af0a0');
+    requestWakeLock(); // Tahan layar kembali
   }
 }
 
@@ -160,6 +194,10 @@ async function startRender(){
   notif('⏳ Render started — '+window._renderFrameCount.toLocaleString()+' frames · '+fpsVal+' fps','#f0a04a');
   playing=false; cancelAnimationFrame(rafId);
   
+  // Tahan Layar agar tidak mati
+  requestWakeLock();
+
+  // ── RESET UI RENDER BUTTONS (FORCED VISIBILITY) ──
   document.getElementById('btnPlay').textContent='▶';
   document.getElementById('btnRender').disabled=true;
   document.getElementById('btnRender').textContent='⏳ Rendering...';
@@ -174,7 +212,7 @@ async function startRender(){
   const bc = document.getElementById('btnCancel');
   if(bc) { bc.style.display='block'; bc.textContent='✕ Cancel'; bc.disabled=false; }
 
-// --- KUNCI TIMEFRAME & SCRUBBER ---
+  // --- KUNCI TIMEFRAME & SCRUBBER ---
   const tfBox = document.getElementById('tfBox');
   if (tfBox) { tfBox.style.pointerEvents = 'none'; tfBox.style.opacity = '0.5'; }
   const scrubber = document.getElementById('scrubber');
@@ -184,7 +222,7 @@ async function startRender(){
   const tfE = document.getElementById('tfE');
   if (tfE) tfE.disabled = true;
 
-  // --- TAMBAHAN: KUNCI SEMUA PANEL UI LAINNYA ---
+  // --- KUNCI SEMUA PANEL UI LAINNYA ---
   const rightPanel = document.getElementById('rightPanel');
   if (rightPanel) { rightPanel.style.pointerEvents = 'none'; rightPanel.style.opacity = '0.4'; }
 
@@ -195,7 +233,7 @@ async function startRender(){
   if (dropZone) { dropZone.style.pointerEvents = 'none'; dropZone.style.opacity = '0.5'; }
 
   const canvasWrap = document.getElementById('canvasWrapper');
-  if (canvasWrap) { canvasWrap.style.pointerEvents = 'none'; } // Mematikan drag & resize overlay di layar
+  if (canvasWrap) { canvasWrap.style.pointerEvents = 'none'; } 
   // ----------------------------------------------
   
   document.getElementById('rpWrap').classList.add('vis');
@@ -492,7 +530,6 @@ async function renderMP4(idx,nf){
       drawFrame(idx[k]);
     }
 
-    // Update Playhead di UI
     const ph = document.getElementById('tfPlayhead');
     if (ph && gpxData) {
       ph.style.display = 'block';
@@ -653,7 +690,6 @@ async function renderZIP(idx,nf){
           } else { drawFrame(idx[k]); }
         } else { drawFrame(idx[k]); }
 
-        // Update Playhead di UI
         const ph = document.getElementById('tfPlayhead');
         if (ph && gpxData) {
           ph.style.display = 'block';
@@ -730,13 +766,15 @@ function resetRenderUI(){
   renderCancelled=false;
   renderPaused=false;
   
+  releaseWakeLock();
+
   document.getElementById('btnRender').disabled=false;
   document.getElementById('btnRender').textContent='▶ RENDER';
   
   const actBtns = document.getElementById('renderActionBtns');
   if(actBtns) actBtns.style.display='none';
 
-// --- KEMBALIKAN FUNGSI KLIK TIMEFRAME ---
+  // --- BUKA KUNCI TIMEFRAME ---
   const tfBox = document.getElementById('tfBox');
   if (tfBox) { tfBox.style.pointerEvents = 'auto'; tfBox.style.opacity = '1'; }
   const scrubber = document.getElementById('scrubber');
@@ -746,7 +784,7 @@ function resetRenderUI(){
   const tfE = document.getElementById('tfE');
   if (tfE) tfE.disabled = false;
 
-  // --- TAMBAHAN: BUKA KUNCI SEMUA PANEL UI LAINNYA ---
+  // --- BUKA KUNCI SEMUA PANEL UI LAINNYA ---
   const rightPanel = document.getElementById('rightPanel');
   if (rightPanel) { rightPanel.style.pointerEvents = 'auto'; rightPanel.style.opacity = '1'; }
 

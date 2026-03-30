@@ -1013,3 +1013,50 @@ function clearCustomWatermark(){
   if(window._dragHandle) window._dragHandle.updateHandles();
   notif('Watermark reset to default');
 }
+
+// ═══════════════════════════════════════════════════════════
+// LOAD SAMPLE GPX
+// ═══════════════════════════════════════════════════════════
+async function loadSampleGPX() {
+  const btn = event.target;
+  const originalText = btn.textContent;
+  
+  try {
+    // Ubah teks tombol jadi loading
+    btn.textContent = '⏳ Loading sample...';
+    btn.disabled = true;
+
+    // Ambil file dari repository (pastikan nama file sesuai dengan yang Anda upload)
+    const response = await fetch('https://imsikruwi.github.io/gpx-greenscreen/sample.gpx');
+    
+    if (!response.ok) {
+      throw new Error('Sample file not found');
+    }
+
+    const gpxText = await response.text();
+    
+    // Tutup landing page
+    const lp = document.getElementById('landingPage');
+    if (lp) {
+      lp.style.opacity = '0';
+      lp.style.transition = 'opacity .3s';
+      setTimeout(() => lp.style.display = 'none', 300);
+    }
+    
+    const bell = document.getElementById('notifBellBtn');
+    if (bell) bell.style.display = 'flex';
+
+    // Proses teks GPX menggunakan fungsi parseGPX yang sudah ada
+    // (Diasumsikan 'sample.gpx' adalah nama file sementaranya)
+    parseGPX(gpxText, 'sample_activity.gpx');
+    
+    notif('Sample GPX loaded successfully', '#4af0a0');
+
+  } catch (error) {
+    notif('Failed to load sample: ' + error.message, '#ff5c5c');
+  } finally {
+    // Kembalikan tombol ke keadaan semula
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}

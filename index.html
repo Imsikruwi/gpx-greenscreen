@@ -140,10 +140,23 @@
     <div class="drop-sub" style="margin-top:6px">or click to browse</div>
   </div>
 
-  <div style="font-size:11px;color:var(--text3);font-family:var(--fm);text-align:center;line-height:1.8">
-    Supports GPX files from Garmin, Strava, Komoot, and more
-  </div>
+  <div style="display:flex; flex-direction:column; align-items:center; gap:16px;">
+    <div style="font-size:11px;color:var(--text3);font-family:var(--fm);text-align:center;line-height:1.8">
+      Supports GPX files from Garmin, Strava, Komoot, and more
+    </div>
 
+<div style="display:flex; gap:10px; justify-content:center; width:100%; max-width:420px;">
+      
+      <button class="bs" onclick="loadSampleGPX(this)" style="flex:1; justify-content:center; font-size:12px; padding:10px 8px; border-radius:24px; background:var(--bg3); cursor:pointer; font-weight:bold; border:1px solid var(--border2); transition:all .2s; color:var(--text); display:flex; align-items:center; gap:6px; text-align:center; white-space:nowrap;" onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'; this.style.background='rgba(74,240,160,0.05)'" onmouseout="this.style.borderColor='var(--border2)'; this.style.color='var(--text)'; this.style.background='var(--bg3)'">
+        <span style="font-size:14px">🪄</span> Try Sample GPX
+      </button>
+      
+      <a href="https://youtu.be/OF4uvo-Y_Iw" target="_blank" class="bs" style="flex:1; justify-content:center; font-size:12px; padding:10px 8px; border-radius:24px; background:#ffffff; cursor:pointer; font-weight:bold; border:1px solid #ffffff; transition:all .2s; color:#000000; text-decoration:none; display:flex; align-items:center; gap:6px; text-align:center; white-space:nowrap;" onmouseover="this.style.background='#ff0000'; this.style.borderColor='#ff0000'; this.style.color='#ffffff';" onmouseout="this.style.background='#ffffff'; this.style.borderColor='#ffffff'; this.style.color='#000000';">
+        <span style="font-size:14px">📺</span> Example Video
+      </a>
+      
+    </div>
+  </div>
   <div style="max-width:380px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
               border-radius:10px;padding:12px 16px;text-align:center">
     <div style="font-size:11px;font-weight:700;color:var(--warn);font-family:'Syne',sans-serif;margin-bottom:4px">

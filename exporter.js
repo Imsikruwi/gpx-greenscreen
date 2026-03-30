@@ -213,7 +213,7 @@ async function startRender(){
   // ── RESET UI RENDER BUTTONS (FORCED VISIBILITY) ──
   document.getElementById('btnPlay').textContent='▶';
   document.getElementById('btnRender').disabled=true;
-  document.getElementById('btnRender').textContent='⏳ Rendering...';
+  document.getElementById('btnRender').style.display='none'; // Menyembunyikan tombol utama
   document.getElementById('btnDownload').style.display='none';
   
   const actBtns = document.getElementById('renderActionBtns');
@@ -247,6 +247,19 @@ async function startRender(){
 
   const canvasWrap = document.getElementById('canvasWrapper');
   if (canvasWrap) { canvasWrap.style.pointerEvents = 'none'; } 
+
+  // --- KUNCI FORMAT, RATIO, BG, & FIT MODE ---
+  const fmtSection = document.getElementById('fmtSection');
+  if (fmtSection) { fmtSection.style.pointerEvents = 'none'; fmtSection.style.opacity = '0.5'; }
+
+  const orientBar = document.getElementById('orientBar');
+  if (orientBar) { orientBar.style.pointerEvents = 'none'; orientBar.style.opacity = '0.5'; }
+
+  const vsb = document.getElementById('vsb');
+  if (vsb) { vsb.style.pointerEvents = 'none'; vsb.style.opacity = '0.5'; }
+
+  const previewBgSection = document.getElementById('previewBgSection');
+  if (previewBgSection) { previewBgSection.style.pointerEvents = 'none'; previewBgSection.style.opacity = '0.5'; }
   // ----------------------------------------------
   
   document.getElementById('rpWrap').classList.add('vis');
@@ -385,7 +398,7 @@ const MP4 = (() => {
  function buildMoov(W,H,fps,nframes,sps,pps,stts,stss,stsc,stsz,co64){
     const timescale=fps*100; 
     const duration=nframes*100; 
-    const mvhd=fullbox('mvhd',1,0,...u64be(0),...u64be(0),...u32be(timescale),...u64be(duration),...u32be(0x00010000),...u16be(0x0100),...[0,0],...u32be(0),...u32be(0),...u32be(0x00010000),...u32be(0),...u32be(0),...u32be(0),...u32be(0x00010000),...u32be(0),...u32be(0),...u32be(0),...u32be(0x40000000),...new Array(24).fill(0),...u32be(2));
+    const mvhd=fullbox('mvhd',1,0,...u64be(0),...u64be(0),...u32be(timescale),...u64be(duration),...u32be(0x00010000),...u16be(0x0100),...[0,0],...u32be(0),...u32be(0),...u32be(0),...u32be(0x00010000),...u32be(0),...u32be(0),...u32be(0),...u32be(0x00010000),...u32be(0),...u32be(0),...u32be(0),...u32be(0x40000000),...new Array(24).fill(0),...u32be(2));
     const tkhd=fullbox('tkhd',1,3,...u64be(0),...u64be(0),...u32be(1),...u32be(0),...u64be(duration),...u32be(0),...u32be(0),...u16be(0),...u16be(0),...u16be(0),...u16be(0),...u32be(0x00010000),...u32be(0),...u32be(0),...u32be(0),...u32be(0x00010000),...u32be(0),...u32be(0),...u32be(0),...u32be(0x40000000),...u32be(W<<16),...u32be(H<<16));
     const mdhd=fullbox('mdhd',1,0,...u64be(0),...u64be(0),...u32be(timescale),...u64be(duration),...u16be(0x55C4),...u16be(0));
     const hdlr=fullbox('hdlr',0,0,...u32be(0),...[...'vide'].map(c=>c.charCodeAt(0)),...u32be(0),...u32be(0),...u32be(0),...[...'VideoHandler '].map(c=>c.charCodeAt(0)));
@@ -630,6 +643,7 @@ async function renderMP4(idx,nf){
   const _logMsg='✅ '+codec.label+' · '+sizeStr+' · '+nf+' frames · '+fpsVal+' fps · '+fmtTime(_vidDurSec)+' · '+_renderElStr;
   notif(_logMsg,'#4af0a0');
   showRenderPopup(_richInfo);
+  downloadResult();
   resetRenderUI();
 }
 
@@ -757,6 +771,7 @@ async function renderZIP(idx,nf){
     const _pngLogMsg='✅ PNG+ZIP · '+mb+' MB · '+nf+' frames · '+fpsVal+' fps · '+fmtTime(_pngVidDur)+' · '+_pngElStr;
     notif(_pngLogMsg,'#4af0a0');
     showRenderPopup(_pngInfo);
+    downloadResult();
     resetRenderUI();
   }
   await chunk(0);
@@ -783,6 +798,7 @@ function resetRenderUI(){
   releaseWakeLock(); // Buka kunci layar setelah selesai atau batal
 
   document.getElementById('btnRender').disabled=false;
+  document.getElementById('btnRender').style.display='flex'; // Menampilkan kembali tombol utama
   document.getElementById('btnRender').textContent='▶ RENDER';
   
   const actBtns = document.getElementById('renderActionBtns');
@@ -810,6 +826,19 @@ function resetRenderUI(){
 
   const canvasWrap = document.getElementById('canvasWrapper');
   if (canvasWrap) { canvasWrap.style.pointerEvents = 'auto'; }
+
+  // --- BUKA KUNCI FORMAT, RATIO, BG, & FIT MODE ---
+  const fmtSection = document.getElementById('fmtSection');
+  if (fmtSection) { fmtSection.style.pointerEvents = 'auto'; fmtSection.style.opacity = '1'; }
+
+  const orientBar = document.getElementById('orientBar');
+  if (orientBar) { orientBar.style.pointerEvents = 'auto'; orientBar.style.opacity = '1'; }
+
+  const vsb = document.getElementById('vsb');
+  if (vsb) { vsb.style.pointerEvents = 'auto'; vsb.style.opacity = '1'; }
+
+  const previewBgSection = document.getElementById('previewBgSection');
+  if (previewBgSection) { previewBgSection.style.pointerEvents = 'auto'; previewBgSection.style.opacity = '1'; }
   // ----------------------------------------------------
   
   document.getElementById('rpWrap').classList.remove('vis');

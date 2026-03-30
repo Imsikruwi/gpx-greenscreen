@@ -11,7 +11,11 @@
 - **Instant Onboarding (New!)**: 
   - **One-Click Sample**: Test the tool instantly using the "Try Sample GPX" button right on the landing page.
   - **Example Video**: Watch a final rendered output via YouTube video link.
-- **Smart Rendering System (New!)**:
+- **Preset Management System (New!)**:
+  - **Instant Presets**: Load rich, pre-configured overlay layouts (like "Preset 1") with a single click, complete with smart loading indicators.
+  - **Quick Default Reset**: Instantly revert all overlay positions, colors, and settings back to the standard layout using the "Default" button.
+  - **Active State Syncing**: The UI intelligently tracks and highlights whether you are using the Default layout or a custom Preset.
+- **Smart Rendering System**:
   - **Dynamic Render Controls**: The Render button seamlessly transforms into distinct Pause/Resume (White) and Cancel (Red) buttons during processing for clear, safe control.
   - **Pause & Resume**: Pause your rendering process at any time without losing progress.
   - **Total UI Lockdown**: Safely disables all UI interactions (Format, Aspect Ratio, Background Color, Fit Mode, Timeframe, etc.) during rendering to prevent accidental changes and video glitches.
@@ -37,6 +41,7 @@
    - Drag overlays on the canvas to set positions.
    - Use the **Timeframe Selector** to trim your activity to specific segments.
    - Adjust the **Opacity Slider** and **Font Scale** for the perfect look.
+   - Try different **Presets** for quick styling.
 4. **Render**:
    - Choose **MP4** for a ready-to-use video file.
    - Choose **PNG + ZIP** and enable **"100% Transparent Background"** for high-end compositing.

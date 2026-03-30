@@ -363,11 +363,13 @@
                  color:var(--text);border-radius:5px;padding:2px 6px;width:72px;outline:none">
       </div>
     </div>
-    <div class="vsg">
+	<div class="vsg">
       <div class="vsbl">Preset</div>
-      <div style="display:flex;gap:5px">
-        <button class="chip" onclick="savePreset()" style="flex:1;padding:5px 4px;font-size:11px" title="Save overlay settings to file">💾 Save</button>
-        <button class="chip" onclick="loadPresetClick()" style="flex:1;padding:5px 4px;font-size:11px" title="Load overlay settings from file">📂 Load</button>
+      <div style="display:flex; gap:5px; flex-wrap:wrap;">
+        <button class="chip" onclick="savePreset()" style="flex:1; min-width:60px; padding:5px 4px; font-size:11px" title="Save overlay settings to file">💾 Save</button>
+        <button class="chip" onclick="loadPresetClick()" style="flex:1; min-width:60px; padding:5px 4px; font-size:11px" title="Load overlay settings from file">📂 Load</button>
+        <button id="btn-preset-default" class="chip on" onclick="resetDefaults()" style="flex:1; min-width:60px; padding:5px 4px; font-size:11px" title="Reset to default settings">↺ Reset</button>
+        <button id="btn-preset-1" class="chip" onclick="fetchPreset1(this)" style="flex:1; min-width:60px; padding:5px 4px; font-size:11px" title="Load Preset 1 (4MB)"> 01 </button>
       </div>
     </div>
   </div>

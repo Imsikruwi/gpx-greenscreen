@@ -851,7 +851,34 @@ function toggleOverlayBg(key,row){
 }
 function setOp(v){ panelOp=parseInt(v)/100; document.getElementById('opVal').textContent=v+'%'; drawFrame(curFrame); }
 function confirmDialog(title, msg, onConfirm){ const bd=document.createElement('div'); bd.className='confirm-backdrop'; bd.innerHTML=`<div class="confirm-box"><div class="confirm-title">${title}</div><div class="confirm-msg">${msg}</div><div class="confirm-btns"><button class="bs" onclick="this.closest('.confirm-backdrop').remove()">Cancel</button><button class="bp" id="confirm-ok" style="padding:7px 18px">Confirm</button></div></div>`; document.body.appendChild(bd); bd.querySelector('#confirm-ok').onclick=()=>{ bd.remove(); onConfirm(); }; bd.addEventListener('click',e=>{ if(e.target===bd)bd.remove(); }); }
-function resetDefaults(){ confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,distance:false,altitude:false}); Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',distance:'bc',altitude:'tc'}); Object.keys(oScale).forEach(k=>delete oScale[k]); fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'],['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); document.getElementById('tog-gpsdate').classList.remove('on'); setOverlayFont('mono', null); setHRStyle('standard',null); setPowerStyle('standard',null); setInfoStyle('list',null); setElevStyle('line',null); setGpsTimeStyle('standard',null); setCoordStyle('standard',null); setCadStyle('standard',null); setArcStyle('ring',null); setGradeStyle('bar',null); setGforceTextPos('center',null); updateSpdMaxSliderUI(); setDistStyle('panel',null); setAltStyle('panel',null); document.getElementById('tog-mapnorth').classList.remove('on'); showOverlayBg = false; document.getElementById('tog-global-bg')?.classList.remove('on'); document.querySelectorAll('[id^="tog-bg-"]').forEach(el => el.classList.remove('on')); document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on')); document.querySelector('.sw[style*="#fff"]')?.classList.add('on'); document.getElementById('canvasWrapper').style.background=bgColor; (function(){ const{W,H}=resWH(); canvas.width=W; canvas.height=H; })(); document.getElementById('opVal').textContent='0%'; document.getElementById('fsVal').textContent='2.20×'; document.getElementById('fs-slider').value=220; document.querySelectorAll('.chip').forEach(b=>{ const oc=b.getAttribute('onclick'); if(oc&&oc.startsWith('setFS(')){ b.classList.toggle('on', oc==="setFS('xxl',this)"); } }); if(window._dragHandle)window._dragHandle.updateHandles(); if(gpxData)drawFrame(curFrame); notif('Reset to default settings'); }); }
+function resetDefaults(){ 
+  confirmDialog('Reset to Default','Reset all overlay positions, sizes and settings to default? GPX data will not be affected.',()=>{ 
+    Object.assign(opts,{speed:true,map:true,info:false,arc:false,prog:false,elev:false, gpstime:true,distov:false,coords:true,gforce:false,compass:false,grade:false,distance:false,altitude:false}); 
+    Object.assign(oPos,{speed:'bl',map:'tr',info:'br',arc:'tl',elev:'bc', gpstime:'tl',coords:'br',gforce:'bl',compass:'tr',grade:'tc',distance:'bc',altitude:'tc'}); 
+    Object.keys(oScale).forEach(k=>delete oScale[k]); 
+    fontScale=2.2; panelOp=0; textColor='#ffffff'; bgColor='#00b140'; renderRes='1080p'; canvasOrient='landscape'; fpsVal=1; 
+    const{W:rW,H:rH}=resWH(); canvas.width=rW; canvas.height=rH; 
+    const cwReset=document.getElementById('canvasWrapper');if(cwReset)cwReset.style.aspectRatio='16/9'; 
+    ['720p','1080p'].forEach(r=>{const b=document.getElementById('res-'+r);if(b)b.classList.toggle('on',r==='1080p');}); 
+    ['landscape','portrait','square'].forEach(o=>{const b=document.getElementById('orient-'+o);if(b)b.classList.toggle('on',o==='landscape');}); 
+    speedUnit='kmh'; spdStyle='bar'; spdMaxMode='auto'; spdMaxCustom=0; gpsFmt='hms'; gpsShowDate=false; mapBgStyle='trans'; mapRouteColor='#ffffff'; mapDotColor='#ff3333'; mapShowNorth=false; osmMapShape='none'; osmMapSize='md'; osmZoom=15; osmUseOSM=false; osmStyle='standard'; osmTint='none'; osmBrightness=100; coordFmt='dms'; coordShowIcon=true; 
+    Object.keys(opts).forEach(k=>{ const t=document.getElementById('tog-'+k); if(t)t.classList.toggle('on',!!opts[k]); const card=document.getElementById('oc-'+k); if(card)card.classList.toggle('off',!opts[k]); }); 
+    const slSync=[ ['fs-slider','100'],['fs-md','on'],['opVal','0%'], ['bg-green','on'],['unit-kmh','on'],['spd-style-bar','on'],['spd-max-auto','on'],['tf-hms','on'], ['osm-shape-none','on'],['osm-style-standard','on'],['osm-tint-none','on'], ['mapbg-trans','on'],['map-mode-simple','on'], ['coord-dms','on'],['gscale-2','on'],['compass-style-rose','on'], ]; 
+    slSync.forEach(([id,val])=>{ const el=document.getElementById(id); if(!el)return; if(val==='on') el.classList.add('on'); else el.value=val; }); 
+    document.getElementById('tog-gpsdate').classList.remove('on'); 
+    setOverlayFont('mono', null); setHRStyle('standard',null); setPowerStyle('standard',null); setInfoStyle('list',null); setElevStyle('line',null); setGpsTimeStyle('standard',null); setCoordStyle('standard',null); setCadStyle('standard',null); setArcStyle('ring',null); setGradeStyle('bar',null); setGforceTextPos('center',null); updateSpdMaxSliderUI(); setDistStyle('panel',null); setAltStyle('panel',null); 
+    document.getElementById('tog-mapnorth').classList.remove('on'); showOverlayBg = false; document.getElementById('tog-global-bg')?.classList.remove('on'); document.querySelectorAll('[id^="tog-bg-"]').forEach(el => el.classList.remove('on')); document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on')); document.querySelector('.sw[style*="#fff"]')?.classList.add('on'); document.getElementById('canvasWrapper').style.background=bgColor; 
+    (function(){ const{W,H}=resWH(); canvas.width=W; canvas.height=H; })(); document.getElementById('opVal').textContent='0%'; document.getElementById('fsVal').textContent='2.20×'; document.getElementById('fs-slider').value=220; 
+    document.querySelectorAll('.chip').forEach(b=>{ const oc=b.getAttribute('onclick'); if(oc&&oc.startsWith('setFS(')){ b.classList.toggle('on', oc==="setFS('xxl',this)"); } }); 
+    
+    // --- KEMBALIKAN STATUS AKTIF KE TOMBOL DEFAULT ---
+    document.getElementById('btn-preset-default')?.classList.add('on');
+    document.getElementById('btn-preset-1')?.classList.remove('on');
+    // -------------------------------------------------
+
+    if(window._dragHandle)window._dragHandle.updateHandles(); if(gpxData)drawFrame(curFrame); notif('Reset to default settings'); 
+  }); 
+}
 function clearGPX(){ confirmDialog('Clear GPX','Remove the current GPX file and return to the start screen?',()=>{ gpxData=null; curFrame=0; tfS0=0; tfE0=0; playing=false; cancelAnimationFrame(rafId); document.getElementById('btnPlay').textContent='▶'; document.getElementById('statsSection').style.display='none'; document.getElementById('fmtSection').style.display='none'; document.getElementById('rightPanel').style.display='none'; document.getElementById('tfSection').style.display='none'; document.getElementById('playbar').classList.remove('vis'); document.getElementById('vsb').classList.remove('vis'); document.getElementById('emptyState').style.display='flex'; document.getElementById('btnRender').disabled=true; document.getElementById('btnDownload').style.display='none'; document.getElementById('rpWrap').classList.remove('vis'); const dz2=document.getElementById('dropZone'); dz2.classList.remove('loaded'); dz2.querySelector('.drop-title').textContent='Drop .gpx file here'; dz2.querySelector('.drop-sub').textContent='or click to browse'; document.getElementById('fileInput').value=''; const{W,H}=resWH(); ctx.clearRect(0,0,W,H); ctx.fillStyle=bgColor; ctx.fillRect(0,0,W,H); osmTileCache.clear(); vecCache.clear(); if(window._dragHandle)window._dragHandle.updateHandles(); const pbSec=document.getElementById('previewBgSection'); if(pbSec) pbSec.style.display='none'; notif('GPX cleared'); }); }
 
 // ═══════════════════════════════════════════════════════════
@@ -1058,5 +1085,44 @@ async function loadSampleGPX() {
     // Kembalikan tombol ke keadaan semula
     btn.textContent = originalText;
     btn.disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// FETCH PRESET DARI GITHUB (preset1.json)
+// ═══════════════════════════════════════════════════════════
+async function fetchPreset1(btn) {
+  const originalText = btn.innerHTML;
+  
+  try {
+    btn.innerHTML = '⏳ Loading...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    btn.style.cursor = 'wait';
+
+    const response = await fetch('https://imsikruwi.github.io/gpx-greenscreen/preset1.json');
+    
+    if (!response.ok) {
+      throw new Error('File preset1.json tidak ditemukan.');
+    }
+
+    const presetData = await response.json();
+    applyPreset(presetData);
+    
+    // --- PINDAHKAN STATUS AKTIF KE PRESET 1 ---
+    document.getElementById('btn-preset-default')?.classList.remove('on');
+    btn.classList.add('on');
+    // ------------------------------------------
+
+    notif('✨ Preset 1 berhasil dimuat!', '#4af0a0');
+
+  } catch (error) {
+    notif('Gagal memuat Preset 1: ' + error.message, '#ff5c5c');
+    console.error('Fetch Preset Error:', error);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
   }
 }

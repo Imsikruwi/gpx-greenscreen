@@ -8,15 +8,19 @@
 
 ## 🚀 Key Features & Latest Updates
 
-- **Advanced GPS Smoothing (New!)**: Implements a 5-point weighted moving average and strict "Stop Detection" to eliminate GPS drift (ghost speeds) when you are completely stationary.
+- **Instant Onboarding (New!)**: 
+  - **One-Click Sample**: Test the tool instantly using the "Try Sample GPX" button right on the landing page.
+  - **Example Video**: Watch a final rendered output via YouTube video link.
 - **Smart Rendering System (New!)**:
+  - **Dynamic Render Controls**: The Render button seamlessly transforms into distinct Pause/Resume (White) and Cancel (Red) buttons during processing for clear, safe control.
   - **Pause & Resume**: Pause your rendering process at any time without losing progress.
-  - **Safe Cancel**: Cancel renders safely with a confirmation prompt.
-  - **UI Lockdown**: Safely disables UI interactions, drags, and timeline shifts during rendering to prevent video glitches.
+  - **Total UI Lockdown**: Safely disables all UI interactions (Format, Aspect Ratio, Background Color, Fit Mode, Timeframe, etc.) during rendering to prevent accidental changes and video glitches.
+  - **Auto-Download**: Automatically triggers the file download the moment your render is 100% complete.
   - **Tab Protection**: Warns you if you accidentally try to close or refresh the tab during a long render.
   - **Dynamic ETA**: Smart, human-readable time estimates and automatic limits (Soft limit for MP4, Hard limit for ZIP) to prevent browser memory crashes.
+- **Advanced GPS Smoothing**: Implements a 5-point weighted moving average and strict "Stop Detection" to eliminate GPS drift (ghost speeds) when you are completely stationary.
 - **Enhanced Timeframe Selector**: 
-  - Now displays the **Actual GPS Time** alongside duration to help you sync with your raw video files.
+  - Displays the **Actual GPS Time** alongside duration to help you sync with your raw video files.
   - Features a live **Playhead indicator** (red line) to track your exact position during playback and rendering.
 - **Dynamic Overlays**: Speedometers (Gauge, Bar, HUD), Odometer, Mini Maps, Elevation Graphs, GPS Time, and Coordinates.
 - **Professional Export Options**:
@@ -27,7 +31,7 @@
 
 ## 🛠 How to Use
 
-1. **Upload**: Drag and drop your `.gpx` file onto the dashboard.
+1. **Upload**: Drag and drop your `.gpx` file onto the dashboard, or click "Try Sample GPX" to test.
 2. **Configure**: Select the overlays you want to display from the right-hand panel.
 3. **Customize**: 
    - Drag overlays on the canvas to set positions.
@@ -36,7 +40,7 @@
 4. **Render**:
    - Choose **MP4** for a ready-to-use video file.
    - Choose **PNG + ZIP** and enable **"100% Transparent Background"** for high-end compositing.
-5. **Download**: Save the rendered output and import it into your video editing software.
+5. **Download**: The rendered output will download automatically. Import it into your video editing software.
 
 ## 💻 Technical Stack
 
